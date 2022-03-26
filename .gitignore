@@ -1,0 +1,5 @@
+.python-version
+poetry.lock
+.env
+db.sqlite3
+**/__pycache__/
