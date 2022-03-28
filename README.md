@@ -1,4 +1,4 @@
-# Sistemas de Gestao Projetos de Engenharia de Software
+# Sistemas de Gestão Projetos de Engenharia de Software
   O desenvolvimento deste projeto tem como objetivo gerenciar grupos de alunos em projetos das disciplinas de Engenharia de Software 1 e 2, de maneira eficiente
   e confiável.
   
