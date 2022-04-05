@@ -104,13 +104,11 @@ class DjangoCustomUser(AbstractBaseUser, PermissionsMixin):
 User = get_user_model()
 
 
-class Usuario(models.Model):
+class Usuario(User):
     nome = models.CharField(
-        max_length=250
+        max_length=300
     )
-    email = models.EmailField(
-        unique=True
-    )
+
 
     class Meta:
         abstract = True
@@ -121,14 +119,10 @@ class Aluno(Usuario):
         max_length=12,
         primary_key=True
     )
-    usuario = models.OneToOneField(
-        User,
-        on_delete=models.CASCADE
-    )
+
 
     class Meta:
         db_table = 'tb_aluno'
-        unique_together = ['email', 'matricula']
         ordering = ['nome']
 
     def __str__(self):
@@ -140,10 +134,6 @@ class Professor(Usuario):
         primary_key=True,
         default=uuid4,
         editable=False
-    )
-    usuario = models.OneToOneField(
-        User,
-        on_delete=models.CASCADE
     )
 
     class Meta:
