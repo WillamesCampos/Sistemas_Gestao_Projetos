@@ -1,6 +1,9 @@
 # Sistemas de Gestão Projetos de Engenharia de Software
   O desenvolvimento deste projeto tem como objetivo gerenciar grupos de alunos em projetos das disciplinas de Engenharia de Software 1 e 2, de maneira eficiente
   e confiável.
+  <h2>Informações importantes></h2>
+    A versão do python 3.10 já foi oficializada, mas a versão estável atualmente é a 3.9.7.
+    Possivelmente durante o projeto, será necessário atualizar a versão do Python.
   
  <h2> Tecnologias Utilizadas
 
