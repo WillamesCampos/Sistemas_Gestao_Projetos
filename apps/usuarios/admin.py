@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from usuarios.models import Aluno, Professor
+from apps.usuarios.models import Aluno, Professor
 
 
 class ProfessorAdmin(admin.ModelAdmin):
