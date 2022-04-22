@@ -6,6 +6,12 @@
     Possivelmente durante o projeto, será necessário atualizar a versão do Python.
   
  <h2> Tecnologias Utilizadas: </h2>
+  <li> Python
+  <li> Django
+  <li> Django Rest Framework
+  <li> Visual Studio Code
+  <li> Docker
+  
 
 <h2> Instalação e Configuração de Dependênias do Projeto</h2>
   
