@@ -1,7 +1,9 @@
 .python-version
 poetry.lock
 .env
+.vscode
 db.sqlite3
 **/__pycache__/
-.vscode
 **/migrations/
+
+*/settings/local.py
