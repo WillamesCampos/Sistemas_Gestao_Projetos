@@ -1,9 +1,12 @@
+from uuid import uuid4
+
 from django.db import models
 from django.contrib.auth.models import (
     AbstractBaseUser, BaseUserManager, PermissionsMixin
 )
 from django.contrib.auth import get_user_model
-from uuid import uuid4
+
+from turmas.models import Turma
 
 """
     Modificando classe User padrão do Django para
@@ -107,6 +110,12 @@ User = get_user_model()
 class Usuario(User):
     nome = models.CharField(
         max_length=300
+    )
+
+    turma = models.ForeignKey(
+        Turma,
+        on_delete=models.DO_NOTHING,
+        null=True
     )
 
 
