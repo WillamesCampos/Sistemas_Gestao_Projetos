@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from turmas.models import Turma
+from apps.turmas.models import Turma
 
 
 class TurmaAdmin(admin.ModelAdmin):

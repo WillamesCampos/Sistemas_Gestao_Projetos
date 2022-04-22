@@ -6,7 +6,7 @@ from django.contrib.auth.models import (
 )
 from django.contrib.auth import get_user_model
 
-from turmas.models import Turma
+from apps.turmas.models import Turma
 
 """
     Modificando classe User padrão do Django para
