@@ -9,6 +9,7 @@ python = "^3.9"
 Django = "^4.0.3"
 djangorestframework = "^3.13.1"
 python-decouple = "^3.6"
+psycopg2 = "^2.9.3"
 
 [tool.poetry.dev-dependencies]
 ipython = "^8.2.0"
