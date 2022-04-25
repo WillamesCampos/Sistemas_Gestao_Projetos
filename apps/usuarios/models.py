@@ -111,11 +111,11 @@ class Usuario(User):
     nome = models.CharField(
         max_length=300
     )
-
     turma = models.ForeignKey(
         Turma,
         on_delete=models.DO_NOTHING,
-        null=True
+        null=True,
+        blank=True
     )
 
 
@@ -124,9 +124,14 @@ class Usuario(User):
 
 
 class Aluno(Usuario):
+    codigo = models.UUIDField(
+        default=uuid4,
+        primary_key=True,
+        editable=False
+    )
     matricula = models.CharField(
         max_length=12,
-        primary_key=True
+        unique=True
     )
 
 

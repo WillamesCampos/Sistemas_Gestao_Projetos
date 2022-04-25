@@ -1,7 +1,7 @@
 from uuid import uuid4
 from django.db import models
 
-# Create your models here.
+
 class Turma(models.Model):
     codigo = models.UUIDField(
         primary_key=True,
