@@ -21,6 +21,25 @@ class Grupo(models.Model):
         related_query_name='lider'
     )
 
+    @property
+    def participantes(self):
+        """Método que lista os participantes do grupo.
+
+        Returns:
+            [list]: [Código dos alunos que pertencem ao grupo]
+        """
+        return Grupo.objects.select_related(
+            'aluno'
+        ).filter(
+            codigo=self.codigo,
+        ).values_list('aluno__codigo', flat=True)
+
+    class Meta:
+        db_table = 'tb_grupo'
+
+    def __str__(self) -> str:
+        return f'{self.codigo}'
+
 
 class Projeto(models.Model):
     codigo = models.UUIDField(
@@ -38,10 +57,9 @@ class Projeto(models.Model):
     area = models.CharField(
         max_length=20
     )
-    grupo = models.OneToOneField(
+    grupo = models.ManyToManyField(
         Grupo,
-        on_delete=models.PROTECT,
-        null=True,
+        through='ProjetoGrupo',
         blank=True,
     )
 
@@ -50,6 +68,39 @@ class Projeto(models.Model):
 
     def __str__(self) -> str:
         return self.nome
+
+
+class ProjetoGrupo(models.Model):
+    codigo = models.UUIDField(
+        default=uuid4,
+        primary_key=True,
+        editable=False
+    )
+    projeto = models.ForeignKey(
+        Projeto,
+        on_delete=models.DO_NOTHING
+    )
+    grupo = models.ForeignKey(
+        Grupo,
+        on_delete=models.DO_NOTHING
+    )
+    data_selecao_projeto = models.DateTimeField(
+        auto_now=True
+    )
+
+    @property
+    def data_selecao_formatada(self):
+        return self.data_selecao_projeto.strftime(
+            "%d/%m/%Y %H:%M:%S"
+        )
+
+    class Meta:
+        db_table = 'tb_projeto_grupo'
+        ordering = ['data_selecao_projeto']
+        verbose_name_plural = 'Projetos Grupos'
+
+    def __str__(self) -> str:
+        return f'{self.codigo}'
 
 
 class Tarefa(models.Model):

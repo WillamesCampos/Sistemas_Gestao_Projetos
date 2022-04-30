@@ -9,7 +9,7 @@ class ProfessorAdmin(admin.ModelAdmin):
 
 
 class AlunoAdmin(admin.ModelAdmin):
-    list_display=('matricula', 'email', 'nome')
+    list_display=('codigo', 'matricula', 'email', 'nome')
     search_fields=['matricula', 'email']
 
 
