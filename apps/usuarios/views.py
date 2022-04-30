@@ -1,19 +1,32 @@
-from rest_framework.views import APIView
+from django.contrib.auth.hashers import make_password
+from rest_framework.viewsets import GenericViewSet
+from rest_framework.mixins import UpdateModelMixin
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import (AuthenticationFailed, NotAuthenticated)
-from .models import Professor, Aluno
+
+from .models import User
+from .serializers import RecuperaSenhaSerializer
 
 
-class LoginViewSet(APIView):
+class RecuperaSenhaViewSet(GenericViewSet, UpdateModelMixin):
 
-    def post(self, request, *args, **kwargs):
-        usuario = super().authenticate(request)
+    authentication_classes = ()
+    permission_classes = ()
 
-        # return super().create(request, *args, **kwargs)
-        if not usuario:
-            raise AuthenticationFailed()
+    serializer_class = RecuperaSenhaSerializer
 
-        super().enforce_csrf(request)
+    def update(self, request, *args, **kwargs):
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        usuario = User.objects.get(email=serializer.data['email'])
+
+        usuario.password = make_password(serializer.data['nova_senha'])
+
+        usuario.save()
+
+        return Response(
+            status=status.HTTP_200_OK
+        )

@@ -60,7 +60,6 @@ class Projeto(models.Model):
     grupo = models.ManyToManyField(
         Grupo,
         through='ProjetoGrupo',
-        null=True,
         blank=True,
     )
 
