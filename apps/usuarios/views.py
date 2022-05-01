@@ -1,12 +1,14 @@
+
 from django.contrib.auth.hashers import make_password
+from rest_framework.viewsets import ModelViewSet
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.mixins import UpdateModelMixin
-from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework import status
 
-from .models import User
+from .models import User, Professor, Aluno
 from .serializers import RecuperaSenhaSerializer
+from .serializers import ProfessorSerializer
 
 
 class RecuperaSenhaViewSet(GenericViewSet, UpdateModelMixin):
@@ -30,3 +32,13 @@ class RecuperaSenhaViewSet(GenericViewSet, UpdateModelMixin):
         return Response(
             status=status.HTTP_200_OK
         )
+
+
+
+class ProfessorViewSet(ModelViewSet):
+
+    serializer_class = ProfessorSerializer
+    queryset = Professor.objects.all()
+
+    class Meta:
+        model = Professor

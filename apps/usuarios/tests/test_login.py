@@ -22,6 +22,14 @@ class TestCore(APITestCase):
 
     @classmethod
     def setUpTestData(cls) -> None:
+
+        cls.pagination_keys = [
+            'pagina_atual',
+            'links',
+            'quantidade',
+            'resultados'
+        ]
+
         cls.professor = Professor.objects.create(
             nome="Professor Teste",
             email="professor@teste.com",
