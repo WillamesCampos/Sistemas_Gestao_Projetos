@@ -13,6 +13,7 @@ from apps.turmas.models import Turma
     que o username seja o e-mail.
 """
 
+
 class DjangoCustomUserManager(BaseUserManager):
     def create_user(self, email, password=None):
         """
@@ -54,6 +55,7 @@ class DjangoCustomUserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
+
 class DjangoCustomUser(AbstractBaseUser, PermissionsMixin):
 
     objects = DjangoCustomUserManager()
@@ -64,20 +66,16 @@ class DjangoCustomUser(AbstractBaseUser, PermissionsMixin):
         unique=True,
     )
     is_active = models.BooleanField(default=True)
-    staff = models.BooleanField(default=False) # a admin user; non super-user
-    admin = models.BooleanField(default=False) # a superuser
-
-    # notice the absence of a "Password field", that is built in.
+    staff = models.BooleanField(default=False)
+    admin = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = [] # Email & Password are required by default.
+    REQUIRED_FIELDS = []
 
     def get_full_name(self):
-        # The user is identified by their email address
         return self.email
 
     def get_short_name(self):
-        # The user is identified by their email address
         return self.email
 
     def __str__(self):
@@ -85,12 +83,10 @@ class DjangoCustomUser(AbstractBaseUser, PermissionsMixin):
 
     def has_perm(self, perm, obj=None):
         "Does the user have a specific permission?"
-        # Simplest possible answer: Yes, always
         return True
 
     def has_module_perms(self, app_label):
         "Does the user have permissions to view the app `app_label`?"
-        # Simplest possible answer: Yes, always
         return True
 
     @property
@@ -118,7 +114,6 @@ class Usuario(User):
         blank=True
     )
 
-
     class Meta:
         abstract = True
 
@@ -133,7 +128,6 @@ class Aluno(Usuario):
         max_length=12,
         unique=True
     )
-
 
     class Meta:
         db_table = 'tb_aluno'

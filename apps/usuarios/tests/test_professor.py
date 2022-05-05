@@ -39,7 +39,7 @@ class TestProfessor(TestCore):
         data = {
             'nome': 'Professor Teste 2',
             'email': 'novo_professor@teste.com',
-            'senha':'teste'
+            'senha': 'teste'
         }
         response = self.client.post(
             url,
@@ -51,7 +51,9 @@ class TestProfessor(TestCore):
             status.HTTP_201_CREATED
         )
 
-        assert ( response.data[key] == data[key] for key in response.data.keys())
+        assert (
+            response.data[key] == data[key] for key in response.data.keys()
+        )
 
     def test_cadastrar_professor_sem_senha(self):
         """
@@ -93,7 +95,7 @@ class TestProfessor(TestCore):
         url = '/professores/'
         data = {
             'email': 'novo_professor@teste.com',
-            'senha':'teste'
+            'senha': 'teste'
         }
         response = self.client.post(
             url,
@@ -119,7 +121,7 @@ class TestProfessor(TestCore):
         url = '/professores/'
         data = {
             'nome': 'Professor Teste 2',
-            'senha':'teste'
+            'senha': 'teste'
         }
         response = self.client.post(
             url,
@@ -146,7 +148,7 @@ class TestProfessor(TestCore):
         data = {
             'nome': 'Professor Teste 2',
             'email': self.professor.email,
-            'senha':'teste'
+            'senha': 'teste'
         }
         response = self.client.post(
             url,
@@ -240,6 +242,10 @@ class TestProfessor(TestCore):
 
         self.professor.refresh_from_db()
 
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
         assert check_password(data['nova_senha'], self.professor.password)
 
     def test_professor_alterar_senha_sem_confirmacao_senha(self):
@@ -386,7 +392,7 @@ class TestProfessor(TestCore):
                 - paginação
         """
 
-        url = f'/professores/'
+        url = '/professores/'
         response = self.client.get(
             url
         )
@@ -401,8 +407,5 @@ class TestProfessor(TestCore):
         assert response.data['quantidade'] == quantidade
 
         assert all(
-            key_response in self.pagination_keys for key_response in response.data.keys()
+            key_response in self.pagination_keys for key_response in response.data.keys() # noqa
         )
-
-
-

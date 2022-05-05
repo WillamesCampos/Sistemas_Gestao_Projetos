@@ -3,7 +3,7 @@ from django.contrib.auth.hashers import make_password, check_password
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 
-from .models import User ,Professor
+from .models import User, Professor, Aluno
 
 
 class ProfessorSerializer(ModelSerializer):
@@ -13,21 +13,17 @@ class ProfessorSerializer(ModelSerializer):
     )
     confirmacao_senha = serializers.CharField(
         max_length=50,
-        required = False
+        required=False
     )
     nova_senha = serializers.CharField(
         max_length=50,
-        required = False
+        required=False
     )
-    nome = serializers.CharField(
-        max_length=250
-    )
-    email = serializers.EmailField()
 
     class Meta:
         model = Professor
         fields = [
-            'codigo','nome', 'email', 'senha',
+            'codigo', 'nome', 'email', 'senha',
             'nova_senha', 'confirmacao_senha'
         ]
 
@@ -56,23 +52,29 @@ class ProfessorSerializer(ModelSerializer):
 
             if dados.get('senha'):
 
-                if not check_password(dados.get('senha'), self.instance.password):
+                if not check_password(
+                    dados.get('senha'), self.instance.password
+                ):
                     raise serializers.ValidationError(
                         'Senha incorreta.'
                     )
 
                 valido = bool(
-                    dados.get('confirmacao_senha', False) and dados.get('nova_senha', False)
+                    dados.get('confirmacao_senha', False) and dados.get(
+                        'nova_senha', False
+                    )
                 )
 
                 if not valido:
                     raise serializers.ValidationError(
-                        'Ao alterar a senha, a nova senha e a confirmação devem ser informados.'
+                        'Ao alterar a senha, a nova senha e a confirmação devem ser informados.' # noqa
                     )
                 else:
-                    if not dados.get('nova_senha') == dados.get('confirmacao_senha'):
+                    if not dados.get('nova_senha') == dados.get(
+                        'confirmacao_senha'
+                    ):
                         raise serializers.ValidationError(
-                            'A nova_senha e a confirmação da senha não conferem.'
+                            'A nova_senha e a confirmação da senha não conferem.' # noqa
                         )
 
         return dados
@@ -108,19 +110,124 @@ class ProfessorSerializer(ModelSerializer):
 
         return instance
 
+
+class AlunoSerializer(ModelSerializer):
+    senha = serializers.CharField(
+        max_length=50
+    )
+    confirmacao_senha = serializers.CharField(
+        max_length=50,
+        required=False
+    )
+    nova_senha = serializers.CharField(
+        max_length=50,
+        required=False
+    )
+
+    class Meta:
+        model = Aluno
+        fields = [
+            'codigo', 'nome', 'email', 'matricula',
+            'senha', 'nova_senha', 'confirmacao_senha'
+        ]
+
+    def to_representation(self, instance):
+        return {
+            'codigo': instance.codigo,
+            'nome': instance.nome,
+            'email': instance.email,
+            'matricula': instance.matricula,
+            'turma': instance.turma,
+        }
+
+    def validate_email(self, email):
+        try:
+            Aluno.objects.get(email=email)
+        except Aluno.DoesNotExist:
+            return email
+
+    def validate_matricula(self, matricula):
+        try:
+            aluno = Aluno.objects.get(matricula=matricula)
+        except Aluno.DoesNotExist:
+            return matricula
+
+        if self.instance and aluno:
+            return None
+
+    def validate(self, dados):
+        if self.instance:
+
+            if dados.get('senha'):
+
+                if not check_password(
+                    dados.get('senha'), self.instance.password
+                ):
+                    raise serializers.ValidationError(
+                        'Senha incorreta.'
+                    )
+
+                valido = bool(
+                    dados.get('confirmacao_senha', False) and dados.get(
+                        'nova_senha', False
+                    )
+                )
+
+                if not valido:
+                    raise serializers.ValidationError(
+                        'Ao alterar a senha, a nova senha e a confirmação devem ser informados.' # noqa
+                    )
+                else:
+                    if not dados.get('nova_senha') == dados.get(
+                        'confirmacao_senha'
+                    ):
+                        raise serializers.ValidationError(
+                            'A nova_senha e a confirmação da senha não conferem.' # noqa
+                        )
+
+        return dados
+
+    def create(self, validated_data):
+
+        return Aluno.objects.create(
+            nome=validated_data['nome'],
+            email=validated_data['email'],
+            matricula=validated_data['matricula'],
+            password=make_password(validated_data['senha']),
+            turma=validated_data.get('turma', None)
+        )
+
+    def update(self, instance, validated_data):
+        try:
+            instance.password = validated_data.pop('nova_senha')
+
+            validated_data.pop('senha')
+            validated_data.pop('confirmacao_senha')
+        except KeyError:
+            pass
+
+        try:
+            if validated_data['matricula'] is None:
+                raise serializers.ValidationError(
+                    'A matrícula informada não pode ser utilizada.'
+                )
+        except KeyError:
+            pass
+
+        return super().update(instance, validated_data)
+
+
 class RecuperaSenhaSerializer(serializers.Serializer):
     email = serializers.EmailField()
     nova_senha = serializers.CharField()
 
     def validate(self, data):
         try:
-            usuario = User.objects.get(email=data['email'])
-        except:
+            User.objects.get(email=data['email'])
+        except User.DoesNotExist:
             raise serializers.ValidationError(
                 'E-mail de usuário não encontrado.'
                 'Foi enviada uma chave de acesso ao e-mail cadastrado.'
             )
 
         return data
-
-
