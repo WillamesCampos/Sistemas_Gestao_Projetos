@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework import routers
 from rest_framework.authtoken.views import ObtainAuthToken
 from .views import RecuperaSenhaViewSet
-from .views import ProfessorViewSet
+from .views import ProfessorViewSet, AlunoViewSet
 
 
 router = routers.SimpleRouter()
@@ -13,13 +13,15 @@ router.register(
     basename='professores'
 )
 
+router.register(
+    'alunos',
+    viewset=AlunoViewSet,
+    basename='alunos'
+)
 
-urlpatterns = [
-    path('', include(router.urls))
-]
 
 urlpatterns = [
     path('login/', ObtainAuthToken.as_view(), name='obter_token_login'),
-    path('recuperar-acesso/senha/', RecuperaSenhaViewSet.as_view({'patch': 'update'}), name='recuperar_acesso_login'),
+    path('recuperar-acesso/senha/', RecuperaSenhaViewSet.as_view({'patch': 'update'}), name='recuperar_acesso_login'), # noqa
     path('', include(router.urls))
 ]

@@ -4,13 +4,13 @@ from apps.usuarios.models import Aluno, Professor
 
 
 class ProfessorAdmin(admin.ModelAdmin):
-    list_display=('codigo', 'email', 'nome')
-    search_fields=['codigo', 'email']
+    list_display = ('codigo', 'email', 'nome')
+    search_fields = ['codigo', 'email']
 
 
 class AlunoAdmin(admin.ModelAdmin):
-    list_display=('codigo', 'matricula', 'email', 'nome')
-    search_fields=['matricula', 'email']
+    list_display = ('codigo', 'matricula', 'email', 'nome')
+    search_fields = ['matricula', 'email']
 
 
 admin.site.register(Aluno, AlunoAdmin)

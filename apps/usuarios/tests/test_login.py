@@ -39,7 +39,8 @@ class TestCore(APITestCase):
         cls.aluno = Aluno.objects.create(
             nome="Aluno Teste",
             email="aluno@teste.com",
-            password=make_password("123")
+            password=make_password("123"),
+            matricula='20220000000'
         )
 
         cls.client = APIClient()
@@ -224,7 +225,7 @@ class TestAutenticacaoUsuario(TestCore):
         self.client.logout()
 
         url = '/recuperar-acesso/senha/'
-        data={
+        data = {
                 "email": self.aluno.email,
                 "nova_senha": "1234"
             }
@@ -252,7 +253,7 @@ class TestAutenticacaoUsuario(TestCore):
         self.client.logout()
 
         url = '/recuperar-acesso/senha/'
-        data={
+        data = {
                 "email": "email@teste.com",
                 "nova_senha": "1234"
             }

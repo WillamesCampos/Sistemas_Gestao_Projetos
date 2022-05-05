@@ -126,5 +126,3 @@ class Tarefa(models.Model):
         on_delete=models.DO_NOTHING,
         null=True
     )
-
-

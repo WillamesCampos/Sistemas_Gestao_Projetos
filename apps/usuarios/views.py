@@ -8,7 +8,7 @@ from rest_framework import status
 
 from .models import User, Professor, Aluno
 from .serializers import RecuperaSenhaSerializer
-from .serializers import ProfessorSerializer
+from .serializers import ProfessorSerializer, AlunoSerializer
 
 
 class RecuperaSenhaViewSet(GenericViewSet, UpdateModelMixin):
@@ -34,7 +34,6 @@ class RecuperaSenhaViewSet(GenericViewSet, UpdateModelMixin):
         )
 
 
-
 class ProfessorViewSet(ModelViewSet):
 
     serializer_class = ProfessorSerializer
@@ -42,3 +41,11 @@ class ProfessorViewSet(ModelViewSet):
 
     class Meta:
         model = Professor
+
+
+class AlunoViewSet(ModelViewSet):
+    serializer_class = AlunoSerializer
+    queryset = Aluno.objects.all()
+
+    class Meta:
+        model: Aluno
