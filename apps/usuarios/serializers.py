@@ -128,7 +128,8 @@ class AlunoSerializer(ModelSerializer):
         model = Aluno
         fields = [
             'codigo', 'nome', 'email', 'matricula',
-            'senha', 'nova_senha', 'confirmacao_senha'
+            'senha', 'nova_senha', 'confirmacao_senha',
+            'turma'
         ]
 
     def to_representation(self, instance):
@@ -137,7 +138,11 @@ class AlunoSerializer(ModelSerializer):
             'nome': instance.nome,
             'email': instance.email,
             'matricula': instance.matricula,
-            'turma': instance.turma,
+            'turma': {
+                'codigo': instance.turma.codigo,
+                'nome': instance.turma.nome,
+                'periodo': instance.turma.periodo
+            } if instance.turma else None,
         }
 
     def validate_email(self, email):
