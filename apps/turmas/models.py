@@ -19,4 +19,4 @@ class Turma(models.Model):
         db_table = 'tb_turma'
 
     def __str__(self) -> str:
-        return f'{self.nome}'
+        return f'{self.codigo}'
