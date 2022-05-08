@@ -1,7 +1,7 @@
 from uuid import uuid4
 from django.db import models
 
-from apps.usuarios.models import Aluno
+from apps.usuarios.models import Aluno, Professor
 
 
 class Grupo(models.Model):
@@ -32,7 +32,7 @@ class Grupo(models.Model):
             'aluno'
         ).filter(
             codigo=self.codigo,
-        ).values_list('aluno__codigo', flat=True)
+        )
 
     class Meta:
         db_table = 'tb_grupo'
@@ -62,12 +62,25 @@ class Projeto(models.Model):
         through='ProjetoGrupo',
         blank=True,
     )
+    professor = models.OneToOneField(
+        Professor,
+        on_delete=models.DO_NOTHING
+    )
+    disponivel = models.BooleanField(
+        default=True
+    )
+    ativo = models.BooleanField(
+        default=True
+    )
+    consolidado = models.BooleanField(
+        default=False
+    )
 
     class Meta:
         db_table = 'tb_projeto'
 
     def __str__(self) -> str:
-        return self.nome
+        return f'{self.codigo}'
 
 
 class ProjetoGrupo(models.Model):
