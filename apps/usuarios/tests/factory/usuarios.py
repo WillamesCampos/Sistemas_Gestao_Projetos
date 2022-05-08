@@ -1,6 +1,6 @@
 from random import choice
 import factory
-from apps.usuarios.models import Aluno
+from apps.usuarios.models import Aluno, Professor
 
 
 def gerar_matricula():
@@ -24,3 +24,13 @@ class AlunoFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = Aluno
+
+
+class ProfessorFactory(factory.django.DjangoModelFactory):
+
+    codigo = factory.Faker('uuid4')
+    nome = factory.Faker('name', locale='pt_BR')
+    email = factory.Faker('email', locale='pt_BR')
+
+    class Meta:
+        model = Professor
