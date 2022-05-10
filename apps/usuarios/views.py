@@ -45,7 +45,9 @@ class ProfessorViewSet(ModelViewSet):
 
 class AlunoViewSet(ModelViewSet):
     serializer_class = AlunoSerializer
-    queryset = Aluno.objects.select_related('turma').all()
+    queryset = Aluno.objects.prefetch_related(
+        'aluno'
+    ).all()
 
     class Meta:
         model: Aluno

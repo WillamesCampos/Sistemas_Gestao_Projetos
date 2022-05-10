@@ -1,6 +1,8 @@
 
 from rest_framework import serializers
 from .models import Projeto, Grupo, ProjetoGrupo
+from apps.usuarios.models import Aluno, Professor
+from apps.turmas.models import TurmaAluno
 
 
 class ProjetoSerializer(serializers.ModelSerializer):
@@ -216,4 +218,78 @@ class ProjetoGrupoSerializer(serializers.ModelSerializer):
             'professor'
         ).get(
             codigo=instance.codigo
+        )
+
+
+class GrupoSerializer(serializers.ModelSerializer):
+
+    projetos = serializers.ListField(
+        child=serializers.PrimaryKeyRelatedField(
+            pk_field=serializers.UUIDField(
+                format='hex_verbose'
+            ),
+            queryset=Projeto.objects.all()
+        ),
+        required=False
+    )
+
+    aluno = serializers.PrimaryKeyRelatedField(
+        pk_field=serializers.UUIDField(
+            format='hex_verbose'
+        ),
+        queryset=Aluno.objects.all(),
+        required=False
+    )
+
+    class Meta:
+        model = Grupo
+        fields = ['aluno', 'projetos']
+
+    def to_representation(self, instance):
+
+        lider = {
+            'codigo': instance.lider.codigo,
+            'matricula': instance.lider.matricula,
+            'lider': True
+        }
+
+        participantes = []
+        participantes.append(lider)
+        membros_grupo = [
+            {
+                'codigo': aluno.codigo,
+                'matricula': aluno.matricula
+            } for aluno in instance.participantes
+        ]
+
+        if membros_grupo:
+            participantes += membros_grupo
+
+        return {
+            'codigo': instance.codigo,
+            'ativo': instance.ativo,
+            'disponivel': instance.disponivel,
+            'participantes': participantes
+        }
+
+    def validate_aluno(self, aluno):
+
+        turma = TurmaAluno.objects.filter(
+            aluno=aluno
+        )
+
+        if not turma:
+            raise serializers.ValidationError(
+                'O aluno deve estar em uma turma.'
+            )
+
+        return aluno
+
+    def validate_projetos(self, projetos):
+        pass
+
+    def create(self, validated_data):
+        
+        return Grupo.objects.create(
+            lider=self.context['request'].aluno
         )

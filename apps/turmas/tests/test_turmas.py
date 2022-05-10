@@ -4,9 +4,9 @@ from random import choice
 
 from rest_framework import status
 from apps.usuarios.tests.test_login import TestCore
-from apps.turmas.tests.factory.turmas import TurmaFactory
+from apps.turmas.tests.factory.turmas import DisciplinaFactory, TurmaAlunoFactory, TurmaFactory
 from apps.usuarios.tests.factory.usuarios import AlunoFactory
-from apps.turmas.models import Turma
+from apps.turmas.models import Turma, TurmaAluno
 from apps.usuarios.models import Aluno
 
 
@@ -21,10 +21,9 @@ class TestTurmasAluno(TestCore):
     @classmethod
     def setUpTestData(cls) -> None:
         super().setUpTestData()
-        cls.turma = TurmaFactory()
-
-        cls.aluno.turma = cls.turma
-        cls.aluno.save()
+        cls.turma = TurmaFactory(
+            professor=cls.professor
+        )
 
     def test_listar_turmas_aluno(self):
         """
@@ -37,10 +36,15 @@ class TestTurmasAluno(TestCore):
                 - status: 200
         """
 
+        TurmaAlunoFactory(
+            turma=self.turma,
+            aluno=self.aluno
+        )
+
         url = '/turmas/'
         response = self.client.get(url)
 
-        total_turmas_aluno = Turma.objects.filter(aluno=self.aluno).count()
+        total_turmas_aluno = TurmaAluno.objects.filter(aluno=self.aluno).count()
 
         self.assertEqual(
             response.status_code,
@@ -57,7 +61,7 @@ class TestTurmasAluno(TestCore):
 
         self.assertEqual(
             response.data['resultados'][0]['codigo'],
-            str(self.turma.codigo)
+            self.turma.codigo
         )
 
     def test_turma_inserir_alunos(self):
@@ -65,32 +69,23 @@ class TestTurmasAluno(TestCore):
             - Motivação:
                 - Inserir alunos na turma
             - Regra de negócio:
-                -Apenas professores podem inserir alunos
+                - Os alunos podem se inserir em uma turma
+                que tem um professor.
                 na turma.
             - Resultado Esperado:
-                - status: 403
+                - status: 200
         """
 
-        alunos = AlunoFactory.create_batch(size=5)
-
-        data = {
-            'alunos': [str(aluno.codigo) for aluno in alunos]
-        }
-
-        url = f'/turmas/{self.turma.codigo}/adicionar-alunos/'
+        url = f'/turmas/{self.turma.codigo}/participar/'
         response = self.client.patch(
-            url,
-            data=data
+            url
         )
 
         self.assertEqual(
             response.status_code,
-            status.HTTP_403_FORBIDDEN
+            status.HTTP_200_OK
         )
-        self.assertEqual(
-            str(response.data['detail']),
-            'Você não tem permissão para executar essa ação.'
-        )
+        assert response.data['alunos']
 
     def test_criar_turma(self):
         """
@@ -106,7 +101,7 @@ class TestTurmasAluno(TestCore):
         url = '/turmas/'
         data = {
             'nome': 'Turma do Barulho',
-            'periodo': datetime.now().strftime('%Y') + str(choice(range(1, 3))) # noqa
+            'periodo': datetime.now().strftime('%Y') + '.' + str(choice(range(1, 3))) # noqa
         }
         response = self.client.post(
             url,
@@ -235,10 +230,14 @@ class TestTurmasProfessor(TestCore):
             HTTP_AUTHORIZATION=cls.token
         )
 
-        cls.turma = TurmaFactory()
-        cls.professor.turma = cls.turma
-
-        cls.professor.save()
+        cls.disciplina = DisciplinaFactory(
+            professor=cls.professor,
+            nome='Disciplina de Testes'
+        )
+        cls.turma = TurmaFactory(
+            professor=cls.professor,
+            disciplina=cls.disciplina
+        )
 
     def test_listar_turmas_professor(self):
         """
@@ -255,7 +254,9 @@ class TestTurmasProfessor(TestCore):
         url = '/turmas/'
         response = self.client.get(url)
 
-        total_turmas = Turma.objects.count()
+        total_turmas = Turma.objects.filter(
+            professor=self.professor
+        ).count()
 
         self.assertEqual(
             response.status_code,
@@ -284,30 +285,31 @@ class TestTurmasProfessor(TestCore):
             'alunos': [str(aluno.codigo) for aluno in alunos]
         }
 
-        total_alunos_antes_requisitar = Aluno.objects.filter(
+        alunos_turma = TurmaAluno.objects.filter(
             turma=self.turma
-        ).count()
+        ).prefetch_related('aluno')
 
-        url = f'/turmas/{self.turma.codigo}/adicionar-alunos/'
+        total_alunos_turma = len(
+            alunos_turma
+        )
+
+        url = f'/turmas/{self.turma.codigo}/'
         response = self.client.patch(
             url,
             data=data
         )
 
-        total_alunos_na_turma = Aluno.objects.filter(
+        total_alunos_turma_requisitado = TurmaAluno.objects.filter(
             turma=self.turma
-        ).count()
+        )
 
         self.assertEqual(
             response.status_code,
             status.HTTP_200_OK
         )
-        assert all(
-            str(aluno['codigo']) in data['alunos'] for aluno in response.data['alunos'] # noqa
-        )
         self.assertNotEqual(
-            total_alunos_antes_requisitar,
-            total_alunos_na_turma
+            total_alunos_turma,
+            total_alunos_turma_requisitado
         )
 
     def test_turma_remover_alunos(self):
@@ -321,18 +323,16 @@ class TestTurmasProfessor(TestCore):
                 - status: 200
         """
 
-        alunos = AlunoFactory.create_batch(
-            size=5,
+        aluno = AlunoFactory()
+
+        TurmaAlunoFactory(
+            aluno=aluno,
             turma=self.turma
         )
 
         data = {
-            'alunos': [str(aluno.codigo) for aluno in alunos]
+            'alunos': str(aluno.codigo)
         }
-
-        total_alunos_antes_requisitar = Aluno.objects.filter(
-            turma=self.turma
-        ).count()
 
         url = f'/turmas/{self.turma.codigo}/remover-alunos/'
         response = self.client.patch(
@@ -340,18 +340,9 @@ class TestTurmasProfessor(TestCore):
             data=data
         )
 
-        total_alunos_na_turma = Aluno.objects.filter(
-            turma=self.turma
-        ).count()
-
         self.assertEqual(
             response.status_code,
             status.HTTP_200_OK
-        )
-
-        self.assertNotEqual(
-            total_alunos_antes_requisitar,
-            total_alunos_na_turma
         )
 
         assert not response.data['alunos']
@@ -362,18 +353,48 @@ class TestTurmasProfessor(TestCore):
                 - Informar lista de alunos vazia para
                 inserir alunos na turma.
             - Regra de negócio:
-                - Não é possível inserir alunos, se nenhum
-                foi informado (incluindo listas vazias).
+                - Atualiza apenas os campos informados,
+                sem inserir alunos.
             - Resultado Esperado:
-                - status: 400
+                - status: 200
         """
 
         data = {
             'alunos': []
         }
 
-        url = f'/turmas/{self.turma.codigo}/adicionar-alunos/'
+        url = f'/turmas/{self.turma.codigo}/'
         response = self.client.patch(
+            url,
+            data=data
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+
+    def test_criar_turma_sem_disciplina(self):
+        """
+            - Motivação:
+                - Criar uma turma sem informar
+                a disciplina do professor.
+            - Regra de negócio:
+                - O professor deve informar o nome
+                e o período da turma para criar.
+                - A disciplina deve ser informada.
+                - A turma é associada ao professor logado.
+                alunos da turma.
+            - Resultado Esperado:
+                - status: 400
+        """
+
+        url = '/turmas/'
+        data = {
+            'nome': 'Turma do Barulho',
+            'periodo': datetime.now().strftime('%Y') + '.' + str(choice(range(1, 3))) # noqa
+        }
+        response = self.client.post(
             url,
             data=data
         )
@@ -383,8 +404,8 @@ class TestTurmasProfessor(TestCore):
             status.HTTP_400_BAD_REQUEST
         )
         self.assertEqual(
-            str(response.data['alunos'][0]),
-            'Este campo é obrigatório. Deve ser informado pelo menos 1 aluno.' # noqa
+            str(response.data['disciplina'][0]),
+            'Este campo é obrigatório.'
         )
 
     def test_criar_turma(self):
@@ -394,6 +415,7 @@ class TestTurmasProfessor(TestCore):
             - Regra de negócio:
                 - O professor deve informar o nome
                 e o período da turma para criar.
+                - A turma é associada ao professor logado.
                 alunos da turma.
             - Resultado Esperado:
                 - status: 200
@@ -402,7 +424,8 @@ class TestTurmasProfessor(TestCore):
         url = '/turmas/'
         data = {
             'nome': 'Turma do Barulho',
-            'periodo': datetime.now().strftime('%Y') + str(choice(range(1, 3))) # noqa
+            'periodo': datetime.now().strftime('%Y') + '.' +str(choice(range(1, 3))), # noqa
+            'disciplina': str(self.disciplina.codigo)
         }
         response = self.client.post(
             url,
@@ -417,8 +440,51 @@ class TestTurmasProfessor(TestCore):
         )
 
         self.assertEqual(
-            str(turma_criada.codigo),
+            turma_criada.codigo,
             response.data['codigo']
+        )
+        self.assertEqual(
+            response.data['professor']['codigo'],
+            turma_criada.professor.codigo
+        )
+        self.assertEqual(
+            response.data['disciplina']['codigo'],
+            turma_criada.disciplina.codigo
+        )
+
+    def test_criar_turma_formato_periodo_invalido(self):
+        """
+            - Motivação:
+                - Criar uma turma com formatação do
+                período inválida.
+            - Regra de negócio:
+                - O professor deve informar o nome
+                e o período da turma para criar.
+                - O período deve ser de formato válido
+                alunos da turma.
+            - Resultado Esperado:
+                - status: 400
+        """
+
+        url = '/turmas/'
+        data = {
+            'nome': 'Turma do Barulho',
+            'periodo': 'abc,de',
+            'disciplina': str(self.disciplina.codigo)
+        }
+        response = self.client.post(
+            url,
+            data=data
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST
+        )
+
+        self.assertEqual(
+            str(response.data['periodo'][0]),
+            'Formato do período deve ser dddd.d, ex: 1111.1'
         )
 
     def test_criar_turma_sem_nome(self):
@@ -437,7 +503,7 @@ class TestTurmasProfessor(TestCore):
 
         url = '/turmas/'
         data = {
-            'periodo': datetime.now().strftime('%Y') + str(choice(range(1, 3))) # noqa
+            'periodo': datetime.now().strftime('%Y') + '.' + str(choice(range(1, 3))) # noqa
         }
         response = self.client.post(
             url,
@@ -543,7 +609,7 @@ class TestTurmasProfessor(TestCore):
 
         url = f'/turmas/{self.turma}/'
         data = {
-            'periodo': datetime.now().strftime("%Y") + '.T',
+            'periodo': '2022.2',
         }
         response = self.client.patch(
             url,
@@ -572,7 +638,9 @@ class TestTurmasProfessor(TestCore):
                 - status: 204
         """
 
-        turma = TurmaFactory()
+        turma = TurmaFactory(
+            professor=self.professor
+        )
         codigo_turma = str(turma.codigo)
 
         url = f'/turmas/{turma}/'

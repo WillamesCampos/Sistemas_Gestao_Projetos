@@ -1,13 +1,20 @@
+from django.db.models import Q
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 from rest_framework import status
 from rest_framework.response import Response
-from .models import Projeto, ProjetoGrupo
-from .serializers import ProjetoGrupoSerializer, ProjetoSerializer
+from .models import (
+    Projeto, ProjetoGrupo, Grupo
+)
+from .serializers import (
+    ProjetoGrupoSerializer, ProjetoSerializer,
+    GrupoSerializer
+)
 
 from rest_framework.permissions import IsAuthenticated
 from apps.core.permissions import (
-    ConcretePermissionProfessor
+    ConcretePermissionProfessor,
+    ConcretePermissionAluno
 )
 
 
@@ -63,3 +70,21 @@ class ProjetoViewSet(ModelViewSet):
         return Response(
             serializer.data
         )
+
+
+class GrupoViewSet(ModelViewSet):
+
+    permission_classes = [
+        IsAuthenticated,
+        ConcretePermissionAluno
+    ]
+    serializer_class = GrupoSerializer
+
+    def get_queryset(self):
+        return Grupo.objects.filter(
+            Q(aluno=self.request.aluno)
+            | Q(lider=self.request.aluno)
+        )
+
+    class Meta:
+        model = Grupo

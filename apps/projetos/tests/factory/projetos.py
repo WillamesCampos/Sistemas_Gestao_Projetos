@@ -22,6 +22,7 @@ class GrupoFactory(factory.django.DjangoModelFactory):
 
     lider = factory.SubFactory(AlunoFactory)
     aluno = factory.SubFactory(AlunoFactory)
+    ativo = True
 
     class Meta:
         model = Grupo

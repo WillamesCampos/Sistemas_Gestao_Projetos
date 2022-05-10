@@ -2,6 +2,7 @@ from django.db import transaction
 from django.contrib.auth.hashers import make_password, check_password
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
+from apps.core.validators import ValidaMatricula
 
 from .models import User, Professor, Aluno
 
@@ -124,12 +125,16 @@ class AlunoSerializer(ModelSerializer):
         required=False
     )
 
+    matricula = serializers.CharField(
+        max_length=12,
+        validators=[ValidaMatricula]
+    )
+
     class Meta:
         model = Aluno
         fields = [
             'codigo', 'nome', 'email', 'matricula',
-            'senha', 'nova_senha', 'confirmacao_senha',
-            'turma'
+            'senha', 'nova_senha', 'confirmacao_senha'
         ]
 
     def to_representation(self, instance):
@@ -137,12 +142,7 @@ class AlunoSerializer(ModelSerializer):
             'codigo': instance.codigo,
             'nome': instance.nome,
             'email': instance.email,
-            'matricula': instance.matricula,
-            'turma': {
-                'codigo': instance.turma.codigo,
-                'nome': instance.turma.nome,
-                'periodo': instance.turma.periodo
-            } if instance.turma else None,
+            'matricula': instance.matricula
         }
 
     def validate_email(self, email):
@@ -198,8 +198,7 @@ class AlunoSerializer(ModelSerializer):
             nome=validated_data['nome'],
             email=validated_data['email'],
             matricula=validated_data['matricula'],
-            password=make_password(validated_data['senha']),
-            turma=validated_data.get('turma', None)
+            password=make_password(validated_data['senha'])
         )
 
     def update(self, instance, validated_data):
