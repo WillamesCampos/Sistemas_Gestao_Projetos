@@ -2,6 +2,7 @@ from uuid import uuid4
 from django.db import models
 
 from apps.usuarios.models import Aluno, Professor
+from apps.turmas.models import Disciplina
 
 
 class Grupo(models.Model):
@@ -13,12 +14,23 @@ class Grupo(models.Model):
     aluno = models.ForeignKey(
         Aluno,
         on_delete=models.DO_NOTHING,
+        null=True
     )
     lider = models.OneToOneField(
         Aluno,
         on_delete=models.DO_NOTHING,
         related_name='lideres',
         related_query_name='lider'
+    )
+    ativo = models.BooleanField(
+        default=False
+    )
+    disponivel = models.BooleanField(
+        default=True
+    )
+    disciplina = models.ForeignKey(
+        Disciplina,
+        on_delete=models.DO_NOTHING
     )
 
     @property
@@ -28,11 +40,11 @@ class Grupo(models.Model):
         Returns:
             [list]: [Código dos alunos que pertencem ao grupo]
         """
-        return Grupo.objects.select_related(
-            'aluno'
-        ).filter(
-            codigo=self.codigo,
+        membros = Aluno.objects.filter(
+            grupo__codigo=self.codigo
         )
+
+        return membros
 
     class Meta:
         db_table = 'tb_grupo'
@@ -62,7 +74,7 @@ class Projeto(models.Model):
         through='ProjetoGrupo',
         blank=True,
     )
-    professor = models.OneToOneField(
+    professor = models.ForeignKey(
         Professor,
         on_delete=models.DO_NOTHING
     )
@@ -74,6 +86,10 @@ class Projeto(models.Model):
     )
     consolidado = models.BooleanField(
         default=False
+    )
+    disciplina = models.ForeignKey(
+        Disciplina,
+        on_delete=models.DO_NOTHING
     )
 
     class Meta:

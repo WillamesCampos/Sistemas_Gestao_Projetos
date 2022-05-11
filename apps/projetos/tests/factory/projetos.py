@@ -1,5 +1,6 @@
 import factory
 from apps.projetos.models import Projeto, Grupo, ProjetoGrupo
+from apps.turmas.tests.factory.turmas import DisciplinaFactory
 from apps.usuarios.tests.factory.usuarios import (
     ProfessorFactory, AlunoFactory
 )
@@ -22,10 +23,12 @@ class GrupoFactory(factory.django.DjangoModelFactory):
 
     lider = factory.SubFactory(AlunoFactory)
     aluno = factory.SubFactory(AlunoFactory)
+    disciplina = factory.SubFactory(DisciplinaFactory)
+    ativo = True
 
     class Meta:
         model = Grupo
-        django_get_or_create = ['aluno', 'lider']
+        django_get_or_create = ['aluno', 'lider', 'disciplina']
 
 
 class ProjetoGrupoFactory(factory.django.DjangoModelFactory):

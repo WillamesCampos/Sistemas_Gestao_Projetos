@@ -1,8 +1,10 @@
 from rest_framework import status
+from apps.usuarios.tests.factory.usuarios import ProfessorFactory
 from apps.usuarios.tests.test_login import TestCore
 from apps.projetos.tests.factory.projetos import (
     GrupoFactory, ProjetoFactory, ProjetoGrupoFactory
 )
+from apps.turmas.tests.factory.turmas import DisciplinaFactory
 from apps.projetos.models import Projeto, ProjetoGrupo
 
 from factory import Faker
@@ -33,12 +35,18 @@ class TestProjeto(TestCore):
             HTTP_AUTHORIZATION=cls.token
         )
 
+        cls.disciplina = DisciplinaFactory(
+            professor=cls.professor,
+            quantidade_grupos=3
+        )
+
     def test_criar_projeto(self):
         """
             - Motivação:
                 - Criar um projeto
             - Regra de negócio:
                 - Apenas um professor pode criar um projeto.
+                - Informar uma disciplina que o professor leciona.
             - Resultado Esperado:
                 - status: 201
         """
@@ -48,7 +56,8 @@ class TestProjeto(TestCore):
             'nome': 'Projeto de cobertura de Testes',
             'tipo': 'Testes',
             'area': 'Testes Unitários',
-            'descricao': 'Lorem Ipsum'
+            'descricao': 'Lorem Ipsum',
+            'disciplina': f'{self.disciplina.codigo}'
         }
 
         response = self.client.post(
@@ -69,6 +78,51 @@ class TestProjeto(TestCore):
             response.data['professor']['codigo'],
             self.professor.codigo
         )
+        self.assertEqual(
+            response.data['disciplina']['codigo'],
+            self.disciplina.codigo
+        )
+
+    def test_criar_projeto_sem_disciplina_professor(self):
+        """
+            - Motivação:
+                - Criar um projeto com uma disciplina que o
+                professor não leciona.
+            - Regra de negócio:
+                - Apenas um professor pode criar um projeto.
+                - Informar uma disciplina que o professor leciona.
+            - Resultado Esperado:
+                - status: 400
+        """
+        professor = ProfessorFactory()
+
+        disciplina = DisciplinaFactory(
+            professor=professor
+        )
+
+        url = '/projetos/'
+        data = {
+            'nome': 'Projeto de cobertura de Testes',
+            'tipo': 'Testes',
+            'area': 'Testes Unitários',
+            'descricao': 'Lorem Ipsum',
+            'disciplina': f'{disciplina.codigo}'
+        }
+
+        response = self.client.post(
+            url, data=data
+        )
+        projeto = Projeto.objects.filter(nome=data['descricao'])
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST
+        )
+        self.assertFalse(projeto)
+        self.assertEqual(
+            str(response.data['disciplina'][0]),
+            'A disciplina informada não pertence ao professor.'
+        )
 
     def test_criar_projeto_sem_nome(self):
         """
@@ -84,7 +138,8 @@ class TestProjeto(TestCore):
         data = {
             'tipo': 'Testes',
             'area': 'Testes Unitários',
-            'descricao': 'Lorem Ipsum'
+            'descricao': 'Lorem Ipsum',
+            'disciplina': f'{self.disciplina.codigo}'
         }
 
         response = self.client.post(
@@ -117,7 +172,8 @@ class TestProjeto(TestCore):
         data = {
             'nome': Faker('company', locale='pt_BR'),
             'area': 'Testes Unitários',
-            'descricao': 'Lorem Ipsum'
+            'descricao': 'Lorem Ipsum',
+            'disciplina': f'{self.disciplina.codigo}'
         }
 
         response = self.client.post(
@@ -150,7 +206,8 @@ class TestProjeto(TestCore):
         data = {
             'nome': Faker('company', locale='pt_BR'),
             'tipo': 'Testes',
-            'descricao': 'Lorem Ipsum'
+            'descricao': 'Lorem Ipsum',
+            'disciplina': f'{self.disciplina.codigo}'
         }
 
         response = self.client.post(
@@ -184,7 +241,8 @@ class TestProjeto(TestCore):
 
         projetos = ProjetoFactory.create_batch(
             size=5,
-            professor=self.professor
+            professor=self.professor,
+            disciplina=self.disciplina
         )
 
         grupos = GrupoFactory.create_batch(size=5)
@@ -227,7 +285,8 @@ class TestProjeto(TestCore):
         """
 
         projeto = ProjetoFactory(
-            professor=self.professor
+            professor=self.professor,
+            disciplina=self.disciplina
         )
 
         url = f'/projetos/{projeto.codigo}/'
@@ -268,7 +327,8 @@ class TestProjeto(TestCore):
         """
 
         projeto = ProjetoFactory(
-            professor=self.professor
+            professor=self.professor,
+            disciplina=self.disciplina
         )
 
         url = f'/projetos/{projeto.codigo}/'
@@ -309,7 +369,8 @@ class TestProjeto(TestCore):
         """
 
         projeto = ProjetoFactory(
-            professor=self.professor
+            professor=self.professor,
+            disciplina=self.disciplina
         )
 
         url = f'/projetos/{projeto.codigo}/'
@@ -351,7 +412,8 @@ class TestProjeto(TestCore):
         """
 
         projeto = ProjetoFactory(
-            professor=self.professor
+            professor=self.professor,
+            disciplina=self.disciplina
         )
 
         grupo = GrupoFactory()
@@ -400,7 +462,7 @@ class TestProjeto(TestCore):
 
         projeto = ProjetoFactory(
             professor=self.professor,
-            consolidado=True
+            disciplina=self.disciplina,
         )
 
         grupo = GrupoFactory()
@@ -446,6 +508,7 @@ class TestProjeto(TestCore):
 
         projeto = ProjetoFactory(
             professor=self.professor,
+            disciplina=self.disciplina,
             consolidado=True
         )
 
@@ -494,6 +557,7 @@ class TestProjeto(TestCore):
 
         projeto = ProjetoFactory(
             professor=self.professor,
+            disciplina=self.disciplina,
             ativo=False
         )
 
@@ -539,7 +603,8 @@ class TestProjeto(TestCore):
         """
 
         projeto = ProjetoFactory(
-            professor=self.professor
+            professor=self.professor,
+            disciplina=self.disciplina
         )
 
         grupos = GrupoFactory.create_batch(size=10)
@@ -592,7 +657,8 @@ class TestProjeto(TestCore):
         """
 
         projeto = ProjetoFactory(
-            professor=self.professor
+            professor=self.professor,
+            disciplina=self.disciplina
         )
 
         grupo = GrupoFactory()
@@ -634,6 +700,7 @@ class TestProjeto(TestCore):
 
         projeto = ProjetoFactory(
             professor=self.professor,
+            disciplina=self.disciplina,
             ativo=False
         )
 
@@ -677,7 +744,8 @@ class TestProjeto(TestCore):
         """
 
         projeto = ProjetoFactory(
-            professor=self.professor
+            professor=self.professor,
+            disciplina=self.disciplina
         )
 
         grupo = GrupoFactory()
@@ -711,16 +779,18 @@ class TestProjeto(TestCore):
     def test_apagar_projeto(self):
         """
             - Motivação:
-                - Apagar um projeto.
+                - Desativar um projeto.
             - Regras de negócio:
-                - Se o projeto contém vínculo com grupos,
-                os vínculos são desfeitos e o projeto apagado.
+                - Apenas projetos associados ao
+                professor podem ser desativados.
+                - Os grupos são desassociados.
             - Resultado Esperado:
-                - status: 200
+                - status: 204
         """
 
         projeto = ProjetoFactory(
-            professor=self.professor
+            professor=self.professor,
+            disciplina=self.disciplina,
         )
 
         grupo = GrupoFactory()
@@ -735,7 +805,164 @@ class TestProjeto(TestCore):
             url
         )
 
+        projeto.refresh_from_db()
+
         self.assertEqual(
             response.status_code,
             status.HTTP_204_NO_CONTENT
+        )
+        self.assertFalse(projeto.ativo)
+
+
+class TestProjetoAluno(TestCore):
+    @classmethod
+    def setUpTestData(cls) -> None:
+        super().setUpTestData()
+
+        cls.disciplina = DisciplinaFactory(
+            professor=cls.professor,
+            quantidade_grupos=3
+        )
+
+    def test_filtrar_projetos_professor(self):
+        """
+            - Motivação:
+                - Lista os projetos associados a um professor.
+            - Regra de negócio:
+                - Lista os projetos com os grupos
+                associados, se tiver.
+                - Lista apenas os projetos criados
+                pelo professor informado no query parameters
+            - Resultado Esperado:
+                - status: 200
+        """
+
+        ProjetoFactory(
+            professor=self.professor,
+            disciplina=self.disciplina
+        )
+
+        professor = ProfessorFactory()
+        disciplina = DisciplinaFactory(
+            professor=professor
+        )
+
+        ProjetoFactory(
+            professor=professor,
+            disciplina=disciplina
+        )
+
+        url = f'/projetos/?professor={self.professor.codigo}'
+
+        response = self.client.get(
+            url
+        )
+
+        total_projetos = Projeto.objects.filter(
+            professor=self.professor
+        ).count()
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+        self.assertEqual(
+            response.data['quantidade'],
+            total_projetos
+        )
+
+    def test_filtrar_projetos_ativo(self):
+        """
+            - Motivação:
+                - Lista os projetos associados a um professor.
+            - Regra de negócio:
+                - Lista os projetos com os grupos
+                associados, se tiver.
+                - Lista apenas os projetos criados
+                pelo professor informado no query parameters
+            - Resultado Esperado:
+                - status: 200
+        """
+
+        ProjetoFactory(
+            professor=self.professor,
+            disciplina=self.disciplina
+        )
+
+        professor = ProfessorFactory()
+        disciplina = DisciplinaFactory(
+            professor=professor
+        )
+
+        ProjetoFactory(
+            professor=professor,
+            disciplina=disciplina,
+            ativo=False
+        )
+
+        url = '/projetos/?ativo=true'
+
+        response = self.client.get(
+            url
+        )
+
+        total_projetos = Projeto.objects.filter(
+            professor=self.professor
+        ).count()
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+        self.assertEqual(
+            response.data['quantidade'],
+            total_projetos
+        )
+
+    def test_filtrar_projetos_disciplina(self):
+        """
+            - Motivação:
+                - Lista os projetos associados a uma disciplina.
+            - Regra de negócio:
+                - Lista os projetos com os grupos
+                associados, se tiver.
+                - Lista apenas os projetos associados a uma
+                disciplina no query parameters.
+            - Resultado Esperado:
+                - status: 200
+        """
+
+        ProjetoFactory(
+            professor=self.professor,
+            disciplina=self.disciplina
+        )
+
+        professor = ProfessorFactory()
+        disciplina = DisciplinaFactory(
+            professor=professor
+        )
+
+        ProjetoFactory(
+            professor=professor,
+            disciplina=disciplina,
+            ativo=False
+        )
+
+        url = f'/projetos/?disciplina={self.disciplina.codigo}'
+
+        response = self.client.get(
+            url
+        )
+
+        total_projetos = Projeto.objects.filter(
+            professor=self.professor
+        ).count()
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+        self.assertEqual(
+            response.data['quantidade'],
+            total_projetos
         )

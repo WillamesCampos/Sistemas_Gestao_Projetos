@@ -1,8 +1,9 @@
+from apps.core import mail
 
 from django.contrib.auth.hashers import make_password
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.viewsets import GenericViewSet
-from rest_framework.mixins import UpdateModelMixin
+from rest_framework.mixins import UpdateModelMixin, CreateModelMixin
 from rest_framework.response import Response
 from rest_framework import status
 
@@ -45,7 +46,46 @@ class ProfessorViewSet(ModelViewSet):
 
 class AlunoViewSet(ModelViewSet):
     serializer_class = AlunoSerializer
-    queryset = Aluno.objects.select_related('turma').all()
+    queryset = Aluno.objects.prefetch_related(
+        'aluno'
+    ).all()
 
     class Meta:
         model: Aluno
+
+
+class CadastroViewSet(GenericViewSet, CreateModelMixin):
+
+    authentication_classes = ()
+    permission_classes = ()
+
+    def get_serializer_class(self):
+        if self.request.query_params.get('usuario') == 'aluno':
+            return AlunoSerializer
+        else:
+            return ProfessorSerializer
+
+    def create(self, request, *args, **kwargs):
+        if request.query_params.get('usuario') == 'aluno':
+            serializer = self.get_serializer(data=request.data)
+        elif request.query_params.get('usuario') == 'professor':
+            serializer = self.get_serializer(data=request.data)
+        else:
+            return Response(
+                data='Não foi possível efetuar o cadastro.',
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+
+        mail.enviar_email_cadastro(
+            'Seja Bem-Vindo!',
+            'Você acabou de se cadastrar no Sistema de Gestão de Projetos.',
+            request.data['email']
+        )
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )

@@ -6,8 +6,6 @@ from django.contrib.auth.models import (
 )
 from django.contrib.auth import get_user_model
 
-from apps.turmas.models import Turma
-
 """
     Modificando classe User padrão do Django para
     que o username seja o e-mail.
@@ -106,12 +104,6 @@ User = get_user_model()
 class Usuario(User):
     nome = models.CharField(
         max_length=300
-    )
-    turma = models.ForeignKey(
-        Turma,
-        on_delete=models.DO_NOTHING,
-        null=True,
-        blank=True
     )
 
     class Meta:

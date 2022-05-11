@@ -2,7 +2,9 @@ from uuid import uuid4
 from rest_framework import status
 
 from apps.usuarios.tests.test_login import TestCore
-from apps.usuarios.tests.factory.usuarios import AlunoFactory
+from apps.usuarios.tests.factory.usuarios import (
+    AlunoFactory, gerar_matricula
+)
 from apps.usuarios.models import Aluno
 
 
@@ -25,7 +27,7 @@ class TestAluno(TestCore):
 
         data = {
             'nome': 'Aluno de Teste',
-            'matricula': '20220043789',
+            'matricula': str(gerar_matricula()),
             'senha': '123',
             'email': 'aluno_de_teste@teste.com'
         }
@@ -57,7 +59,7 @@ class TestAluno(TestCore):
 
         data = {
             'nome': 'Aluno de Teste',
-            'matricula': '20220043789',
+            'matricula': str(gerar_matricula()),
             'email': 'aluno_de_teste@teste.com'
         }
 
@@ -89,7 +91,7 @@ class TestAluno(TestCore):
 
         data = {
             'nome': 'Aluno de Teste',
-            'matricula': '20220043789',
+            'matricula': str(gerar_matricula()),
             'senha': '123',
         }
 
@@ -120,7 +122,7 @@ class TestAluno(TestCore):
         """
 
         data = {
-            'matricula': '20220043789',
+            'matricula': str(gerar_matricula()),
             'senha': '123',
             'email': 'aluno_de_teste@teste.com'
         }
@@ -170,6 +172,75 @@ class TestAluno(TestCore):
         self.assertEqual(
             response.data['matricula'][0],
             'Este campo é obrigatório.'
+        )
+
+    def test_criar_aluno_matricula_com_letras(self):
+        """
+            - Motivação:
+                - Criar um aluno informando uma matricula
+                que contém letras.
+            - Regra de negócio:
+                - Não é possível criar um usuário aluno sem
+                informar uma matrícula válida
+            - Resultado Esperado:
+                - status: 400
+        """
+
+        data = {
+            'nome': 'Aluno de Teste',
+            'senha': '123AAA',
+            'email': 'aluno_de_teste@teste.com',
+            'matricula': '123456789abc'
+        }
+
+        url = '/alunos/'
+        response = self.client.post(
+            url,
+            data=data
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST
+        )
+        self.assertEqual(
+            response.data['matricula'][0],
+            'Devem ser informados apenas números na matrícula.'
+        )
+
+    def test_criar_aluno_matricula_quantidade_caracteres_invalida(self): # noqa
+        """
+            - Motivação:
+                - Criar um aluno informando uma matricula
+                que contém uma quantidade de caracteres que não seja
+                12.
+            - Regra de negócio:
+                - Não é possível criar um usuário aluno sem
+                informar uma matrícula válida
+            - Resultado Esperado:
+                - status: 400
+        """
+
+        data = {
+            'nome': 'Aluno de Teste',
+            'senha': '123AAA',
+            'email': 'aluno_de_teste@teste.com',
+            'matricula': '12345678'
+        }
+
+        url = '/alunos/'
+        response = self.client.post(
+            url,
+            data=data
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST
+        )
+        self.assertEqual(
+            response.data['matricula'][0],
+            'A matrícula deve ter 12 caracteres.'
         )
 
     def test_editar_nome_aluno(self):
@@ -248,7 +319,7 @@ class TestAluno(TestCore):
         """
 
         data = {
-            'matricula': '202320034323'
+            'matricula': str(gerar_matricula())
         }
 
         url = f'/alunos/{self.aluno.codigo}/'
