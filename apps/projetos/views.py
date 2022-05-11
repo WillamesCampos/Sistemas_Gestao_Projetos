@@ -10,6 +10,7 @@ from .serializers import (
     ProjetoGrupoSerializer, ProjetoSerializer,
     GrupoSerializer
 )
+from .filters import GrupoFilter, ProjetoFilter
 
 from rest_framework.permissions import IsAuthenticated
 from apps.core.permissions import (
@@ -23,17 +24,30 @@ class ProjetoViewSet(ModelViewSet):
     serializer_class = ProjetoSerializer
     permission_classes = [
         IsAuthenticated, ConcretePermissionProfessor
+        | ConcretePermissionAluno
     ]
+    filterset_class = ProjetoFilter
 
     class Meta:
         model = Projeto
 
+    def get_permissions(self):
+        try:
+            if self.request.user.aluno and self.action in ['list', 'retrieve']:
+                return [ConcretePermissionAluno()]
+        except (TypeError, AttributeError):
+            return super().get_permissions()
+
     def get_queryset(self):
-        return Projeto.objects.prefetch_related(
-            'grupo'
-        ).select_related('professor').filter(
-            professor=self.request.professor
-        )
+        if hasattr(self.request, 'professor'):
+            return Projeto.objects.prefetch_related(
+                'grupo'
+            ).select_related('professor').filter(
+                professor=self.request.professor,
+                disciplina__professor=self.request.professor
+            )
+        else:
+            return Projeto.objects.all()
 
     def destroy(self, request, *args, **kwargs):
 
@@ -43,7 +57,8 @@ class ProjetoViewSet(ModelViewSet):
             projeto=instance
         ).delete()
 
-        instance.delete()
+        instance.ativo = False
+        instance.save()
 
         return Response(
             status=status.HTTP_204_NO_CONTENT
@@ -79,12 +94,40 @@ class GrupoViewSet(ModelViewSet):
         ConcretePermissionAluno
     ]
     serializer_class = GrupoSerializer
+    filterset_class = GrupoFilter
+
+    def get_permissions(self):
+        try:
+            if self.request.user.professor:
+                if self.action in ['list', 'retrieve', 'ativar']:
+                    return [ConcretePermissionProfessor()]
+        except (TypeError, AttributeError):
+            return super().get_permissions()
 
     def get_queryset(self):
-        return Grupo.objects.filter(
-            Q(aluno=self.request.aluno)
-            | Q(lider=self.request.aluno)
-        )
+        if hasattr(self.request, 'aluno'):
+            grupos = Grupo.objects.filter(
+                Q(aluno=self.request.aluno)
+                | Q(lider=self.request.aluno),
+                ativo=True
+            )
+
+            if grupos:
+                return grupos
+            else:
+                return Grupo.objects.all()
+
+        return Grupo.objects.all()
 
     class Meta:
         model = Grupo
+
+    @action(
+        methods=['patch'],
+        detail=True,
+        url_path='participar',
+        url_name='participar'
+    )
+    def participar_grupos(self, request, pk):
+
+        instance = self.get_object()

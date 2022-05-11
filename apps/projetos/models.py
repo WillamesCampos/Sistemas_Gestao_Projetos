@@ -28,6 +28,10 @@ class Grupo(models.Model):
     disponivel = models.BooleanField(
         default=True
     )
+    disciplina = models.ForeignKey(
+        Disciplina,
+        on_delete=models.DO_NOTHING
+    )
 
     @property
     def participantes(self):
@@ -36,17 +40,11 @@ class Grupo(models.Model):
         Returns:
             [list]: [Código dos alunos que pertencem ao grupo]
         """
-        grupo_membros = Grupo.objects.select_related(
-            'aluno', 'lider'
-        ).filter(
-            codigo=self.codigo,
-            aluno__isnull=False
+        membros = Aluno.objects.filter(
+            grupo__codigo=self.codigo
         )
 
-        if not grupo_membros:
-            return grupo_membros
-
-        return grupo_membros.values_list('aluno', flat=True)
+        return membros
 
     class Meta:
         db_table = 'tb_grupo'
@@ -76,7 +74,7 @@ class Projeto(models.Model):
         through='ProjetoGrupo',
         blank=True,
     )
-    professor = models.OneToOneField(
+    professor = models.ForeignKey(
         Professor,
         on_delete=models.DO_NOTHING
     )

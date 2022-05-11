@@ -1,17 +1,22 @@
 
 from rest_framework import serializers
 from .models import Projeto, Grupo, ProjetoGrupo
-from apps.usuarios.models import Aluno, Professor
-from apps.turmas.models import TurmaAluno
+from apps.usuarios.models import Aluno
+from apps.turmas.models import TurmaAluno, Disciplina
 
 
 class ProjetoSerializer(serializers.ModelSerializer):
 
+    disciplina = serializers.PrimaryKeyRelatedField(
+        pk_field=serializers.UUIDField(
+            format='hex_verbose'
+        ),
+        queryset=Disciplina.objects.filter(ativo=True)
+    )
+
     class Meta:
         model = Projeto
-        fields = [
-            'codigo', 'nome', 'tipo', 'area', 'ativo'
-        ]
+        exclude = ['professor', 'ativo']
 
     def to_representation(self, instance):
 
@@ -27,6 +32,13 @@ class ProjetoSerializer(serializers.ModelSerializer):
         except (TypeError, AttributeError):
             grupos = None
 
+        disciplina = {
+            'codigo': instance.disciplina.codigo,
+            'nome': instance.disciplina.nome,
+            'nota_corte': instance.disciplina.nota_corte,
+            'quantidade_grupos': instance.disciplina.quantidade_grupos
+        }
+
         return {
             'codigo': instance.codigo,
             'nome': instance.nome,
@@ -39,8 +51,18 @@ class ProjetoSerializer(serializers.ModelSerializer):
                 'codigo': instance.professor.codigo,
                 'nome': instance.professor.nome
             },
+            'disciplina': disciplina,
             'grupos': grupos
         }
+
+    def validate_disciplina(self, disciplina):
+
+        if self.context['request'].professor != disciplina.professor:
+            raise serializers.ValidationError(
+                'A disciplina informada não pertence ao professor.'
+            )
+
+        return disciplina
 
     def create(self, validated_data):
 
@@ -48,25 +70,30 @@ class ProjetoSerializer(serializers.ModelSerializer):
             nome=validated_data['nome'],
             tipo=validated_data['tipo'],
             area=validated_data['area'],
-            professor=self.context['request'].professor
+            professor=self.context['request'].professor,
+            disciplina=validated_data['disciplina']
         )
 
-        return projeto
+        return Projeto.objects.select_related(
+            'professor', 'disciplina'
+        ).get(codigo=projeto.codigo)
 
     def update(self, instance, validated_data):
-        if validated_data.get('ativo', None) is False:
+        if validated_data.get('ativo', None):
             ProjetoGrupo.objects.filter(
                 projeto=instance
             ).delete()
 
         instance.consolidado = False
 
+        if validated_data.get('disciplina'):
+            instance.disciplina = validated_data['disciplina']
+            validated_data.pop('disciplina')
+
         return super().update(instance, validated_data)
 
 
 class ProjetoGrupoSerializer(serializers.ModelSerializer):
-
-    MAX_GRUPOS = 12
 
     MIN_GRUPOS = 1
 
@@ -120,6 +147,11 @@ class ProjetoGrupoSerializer(serializers.ModelSerializer):
 
     def validate_grupo(self, grupo):
 
+        if not grupo.ativo:
+            raise serializers.ValidationError(
+                'O grupo precisa estar ativo para ser vinculado a um projeto.'
+            )
+
         if self.instance and grupo is not None:
 
             try:
@@ -136,7 +168,7 @@ class ProjetoGrupoSerializer(serializers.ModelSerializer):
                     projeto=self.instance
                 ).count()
 
-                if vagas_selecao == self.MAX_GRUPOS:
+                if vagas_selecao == self.instance.disciplina.quantidade_grupos:
                     raise serializers.ValidationError(
                         'Não é possível adicionar mais grupos ao projeto'
                     )
@@ -241,9 +273,17 @@ class GrupoSerializer(serializers.ModelSerializer):
         required=False
     )
 
+    disciplina = serializers.PrimaryKeyRelatedField(
+        pk_field=serializers.UUIDField(
+            format='hex_verbose'
+        ),
+        queryset=Disciplina.objects.filter(ativo=True),
+        required=False
+    )
+
     class Meta:
         model = Grupo
-        fields = ['aluno', 'projetos']
+        fields = ['aluno', 'projetos', 'disciplina']
 
     def to_representation(self, instance):
 
@@ -288,8 +328,28 @@ class GrupoSerializer(serializers.ModelSerializer):
     def validate_projetos(self, projetos):
         pass
 
+    def validate(self, data):
+        turma_aluno = TurmaAluno.objects.filter(
+            aluno=self.context['request'].aluno
+        ).values_list('turma__disciplina', flat=True)
+
+        if not turma_aluno:
+            raise serializers.ValidationError(
+                {
+                    'aluno': 'Você não pode criar um grupo sem estar em uma turma.' # noqa
+                }
+            )
+
+        if data['disciplina'].codigo not in turma_aluno:
+            raise serializers.ValidationError(
+                {
+                    'disciplina': 'A disciplina da turma que você está é diferente da informada.' # noqa
+                }
+            )
+        return data
+
     def create(self, validated_data):
-        
         return Grupo.objects.create(
-            lider=self.context['request'].aluno
+            lider=self.context['request'].aluno,
+            disciplina=validated_data['disciplina']
         )
