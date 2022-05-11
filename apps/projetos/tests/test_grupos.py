@@ -130,20 +130,3 @@ class TestGrupoAluno(TestCore):
         ][0][
             'participantes'
         ][0]['lider']
-
-    # def test_participar_grupo(self):
-
-    #     url = '/grupos/'
-
-    #     response = self.client.post(
-    #         url
-    #     )
-
-    #     self.assertEqual(
-    #         response.status_code,
-    #         status.HTTP_400_BAD_REQUEST
-    #     )
-    #     self.assertEqual(
-    #         str(response.data['aluno'][0]),
-    #         'Você não pode criar um grupo sem estar em uma turma.'
-    #     )
