@@ -21,7 +21,7 @@ router.register(
 
 
 urlpatterns = [
-    path('cadastre-se/', CadastroViewSet.as_view({'post': 'create'}), name='cadastro'),
+    path('cadastre-se/', CadastroViewSet.as_view({'post': 'create'}), name='cadastro'), # noqa
     path('login/', ObtainAuthToken.as_view(), name='obter_token_login'),
     path('recuperar-acesso/senha/', RecuperaSenhaViewSet.as_view({'patch': 'update'}), name='recuperar_acesso_login'), # noqa
     path('', include(router.urls))

@@ -1,9 +1,14 @@
 .python-version
-poetry.lock
 .env
 .vscode
-db.sqlite3
-**/__pycache__/
-**/migrations/
 
-*/settings/local.py
+**/migrations/
+**/__pycache__/
+
+celerybeat-schedule.bak
+celerybeat-schedule.dat
+celerybeat-schedule.dir
+poetry.lock
+db.sqlite3
+
+

@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
+    'corsheaders',
     'django_filters',
     'apps.usuarios',
     'apps.turmas',
@@ -62,12 +63,15 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+CORS_ALLOW_ALL_ORIGINS = True
 
 ROOT_URLCONF = 'sistema_gestao_projetos.urls'
 
@@ -89,6 +93,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'sistema_gestao_projetos.wsgi.application'
 
+DJANGO_SETTINGS_MODULE = 'sistema_gestao_projetos.settings.{config("ENV", "production")'
 
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
@@ -103,6 +108,7 @@ DATABASES = {
         'PORT': config('DB_PORT')
     }
 }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
@@ -167,3 +173,9 @@ EMAIL_PORT = config('EMAIL_PORT', cast=int)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', cast=bool)
+
+
+DEBUG = True
+CELERY_BROKER_URL = config('BASE_REDIS_URL')
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'

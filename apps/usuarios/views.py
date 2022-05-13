@@ -1,5 +1,3 @@
-from apps.core import mail
-
 from django.contrib.auth.hashers import make_password
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.viewsets import GenericViewSet
@@ -10,6 +8,8 @@ from rest_framework import status
 from .models import User, Professor, Aluno
 from .serializers import RecuperaSenhaSerializer
 from .serializers import ProfessorSerializer, AlunoSerializer
+
+from .tasks import celery_email_cadastro
 
 
 class RecuperaSenhaViewSet(GenericViewSet, UpdateModelMixin):
@@ -79,7 +79,7 @@ class CadastroViewSet(GenericViewSet, CreateModelMixin):
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
 
-        mail.enviar_email_cadastro(
+        celery_email_cadastro.delay(
             'Seja Bem-Vindo!',
             'Você acabou de se cadastrar no Sistema de Gestão de Projetos.',
             request.data['email']
