@@ -7,7 +7,6 @@ from apps.turmas.tests.factory.turmas import (
     DisciplinaFactory
 )
 from apps.projetos.tests.factory.projetos import GrupoFactory, ProjetoFactory
-from apps.projetos.models import Grupo
 
 
 class TestGrupoAluno(TestCore):

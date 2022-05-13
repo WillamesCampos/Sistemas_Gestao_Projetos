@@ -1,9 +1,8 @@
 from rest_framework import serializers
 from apps.core.validators import ValidaPeriodo
-from apps.projetos.models import Disciplina
 
 from apps.turmas.models import Turma, TurmaAluno, Disciplina
-from apps.usuarios.models import Aluno, Professor
+from apps.usuarios.models import Aluno
 
 
 class DisciplinaSerializer(serializers.ModelSerializer):
@@ -178,4 +177,3 @@ class AlunosTurmaSerializer(serializers.Serializer):
         ).get(
             codigo=instance.codigo
         )
-

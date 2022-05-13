@@ -1,6 +1,7 @@
 from rest_framework.serializers import ValidationError
 from re import match
 
+
 def ValidaMatricula(matricula):
     if len(matricula) != 12:
         message = 'A matrícula deve ter 12 caracteres.'

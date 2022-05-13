@@ -129,5 +129,4 @@ class GrupoViewSet(ModelViewSet):
         url_name='participar'
     )
     def participar_grupos(self, request, pk):
-
-        instance = self.get_object()
+        pass

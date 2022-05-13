@@ -4,10 +4,11 @@ from random import choice
 
 from rest_framework import status
 from apps.usuarios.tests.test_login import TestCore
-from apps.turmas.tests.factory.turmas import DisciplinaFactory, TurmaAlunoFactory, TurmaFactory
+from apps.turmas.tests.factory.turmas import (
+    DisciplinaFactory, TurmaAlunoFactory, TurmaFactory
+)
 from apps.usuarios.tests.factory.usuarios import AlunoFactory
 from apps.turmas.models import Turma, TurmaAluno
-from apps.usuarios.models import Aluno
 
 
 class TestTurmasAluno(TestCore):
@@ -44,7 +45,9 @@ class TestTurmasAluno(TestCore):
         url = '/turmas/'
         response = self.client.get(url)
 
-        total_turmas_aluno = TurmaAluno.objects.filter(aluno=self.aluno).count()
+        total_turmas_aluno = TurmaAluno.objects.filter(
+            aluno=self.aluno
+        ).count()
 
         self.assertEqual(
             response.status_code,
