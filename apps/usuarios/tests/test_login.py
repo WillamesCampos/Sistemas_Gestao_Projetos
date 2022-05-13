@@ -3,6 +3,7 @@ from rest_framework.test import APIClient, APITestCase
 from rest_framework import status
 
 from apps.usuarios.models import Professor, Aluno
+from sistema_gestao_projetos.celery import Celery
 
 
 class TestCore(APITestCase):
@@ -19,6 +20,10 @@ class TestCore(APITestCase):
         self.client.credentials(
             HTTP_AUTHORIZATION=self.token
         )
+
+        app = Celery('sistema_gestao_projetos')
+
+        app.conf.CELERY_ALWAYS_EAGER = True
 
     @classmethod
     def setUpTestData(cls) -> None:
