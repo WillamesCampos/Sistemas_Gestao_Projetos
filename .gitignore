@@ -8,7 +8,6 @@
 celerybeat-schedule.bak
 celerybeat-schedule.dat
 celerybeat-schedule.dir
-poetry.lock
 db.sqlite3
 
 
