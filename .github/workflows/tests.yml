@@ -1,0 +1,41 @@
+name: Testes
+
+on: [pull_request]
+jobs:
+  teste:
+    name: Testes
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
+
+  postgres:
+    image: postgres:latest
+    env:
+      SECRET_KEY: ${{ secrets.SECRET_KEY}}
+      DOMINIO: "http://127.0.0.1:8000"
+      DB_NAME: "pg_teste"
+      DB_USER: "postgres"
+      DB_PASSWORD: "123"
+      DB_HOST: "postgres"
+      DB_PORT: 5432
+      EMAIL_HOST: "teste"
+      EMAIL_PORT: 587
+      EMAIL_USE_TLS: "teste"
+      EMAIL_HOST_USER: "teste"
+      EMAIL_HOST_PASSWORD: "teste"
+
+  steps:
+  - name: Checkout
+    uses: actions/checkout@v2
+  - name : Linting do código fonte
+    run: |
+      pip3 install flake8
+      pip3 install Faker
+      flake8 --count --exclude=*/migrations/*,*/fixtures/*,./sistema_gestao_projetos/*,manage.py;
+  - name: Testes de Unidade
+    run: |
+      pip3 install factory-boy
+      python manage.py test -v2 --parallel --failfast;
