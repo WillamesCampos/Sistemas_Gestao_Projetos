@@ -3,7 +3,7 @@ name: Testes
 on: [pull_request, push]
 
 jobs:
-  teste:
+    teste:
       name: Testes
       runs-on: ubuntu-latest
       services:
