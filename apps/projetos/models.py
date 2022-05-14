@@ -142,7 +142,8 @@ class Tarefa(models.Model):
         max_length=40
     )
     descricao = models.TextField()
-    prazo = models.DateTimeField()
+    data = models.DateField()
+    hora = models.DateTimeField()
     situacao = models.CharField(
         max_length=10
     )
@@ -155,3 +156,49 @@ class Tarefa(models.Model):
         on_delete=models.DO_NOTHING,
         null=True
     )
+    ativo = models.BooleanField(
+        default=True
+    )
+
+    @property
+    def prazo_formatado(self):
+        data = self.data.strftime(
+            "%d/%m/%Y"
+        )
+        hora = self.hora.strftime(
+            "%H:%M:%S"
+        )
+
+        return f'{data} {hora}'
+
+    class Meta:
+        db_table = 'tb_tarefa'
+
+    def __str__(self) -> str:
+        return self.codigo
+
+
+class GrupoTarefa(models.Model):
+    codigo = models.UUIDField(
+        default=uuid4,
+        primary_key=True,
+        editable=False
+    )
+    tarefa = models.ForeignKey(
+        Tarefa,
+        on_delete=models.CASCADE,
+    )
+    grupo = models.ForeignKey(
+        Grupo,
+        on_delete=models.CASCADE
+    )
+    data_criacao = models.DateTimeField(
+        auto_now=True
+    )
+
+    class Meta:
+        db_table = 'tb_grupo_tarefa'
+
+    def __str__(self) -> str:
+        return self.codigo
+

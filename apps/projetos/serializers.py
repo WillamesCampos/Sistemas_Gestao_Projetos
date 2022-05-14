@@ -1,6 +1,10 @@
 
+from datetime import datetime
 from rest_framework import serializers
-from .models import Projeto, Grupo, ProjetoGrupo
+from .models import (
+    Projeto, Grupo, ProjetoGrupo,
+    Tarefa, GrupoTarefa
+)
 from apps.usuarios.models import Aluno
 from apps.turmas.models import TurmaAluno, Disciplina
 
@@ -353,3 +357,107 @@ class GrupoSerializer(serializers.ModelSerializer):
             lider=self.context['request'].aluno,
             disciplina=validated_data['disciplina']
         )
+
+
+class TarefaSerializer(serializers.ModelSerializer):
+
+    projeto = serializers.PrimaryKeyRelatedField(
+        pk_field=serializers.UUIDField(
+            format='hex_verbose'
+        ),
+        queryset=Projeto.objects.filter(ativo=True),
+    )
+    data = serializers.CharField(
+        max_length=15
+    )
+    hora = serializers.CharField(
+        max_length=15
+    )
+    situacao = serializers.CharField(
+        required=False,
+        max_length=20
+    )
+    ativo = serializers.BooleanField(
+        required=False
+    )
+
+    class Meta:
+        model = Tarefa
+        fields = [
+            'nome', 'projeto', 'situacao', 'descricao',
+            'data', 'hora', 'ativo'
+        ]
+
+    def to_representation(self, instance):
+        return {
+            'codigo': instance.codigo,
+            'nome': instance.nome,
+            'descricao': instance.descricao,
+            'situacao': instance.situacao,
+            'prazo': instance.prazo_formatado,
+            'status': instance.ativo,
+            'projeto': {
+                'codigo': instance.projeto.codigo,
+                'nome': instance.projeto.nome,
+                'professor': instance.projeto.professor.nome,
+                'disciplina': instance.projeto.disciplina.nome
+            }
+        }
+
+    def validate_projeto(self, projeto):
+        if hasattr(
+            self.context['request'], 'professor'
+        ):
+            if projeto.professor != self.context['request'].professor:
+                raise serializers.ValidationError(
+                    'O projeto não está associado a sua conta. Não é possível criar uma tarefa' # noqa
+                )
+        return projeto
+
+    def validate_situacao(self, situacao):
+        if situacao not in ['pendente', 'concluida', 'atrasada']:
+            raise serializers.ValidationError(
+                'A situação só pode ser pendente, concluída ou atrasada.'
+            )
+
+        return situacao
+
+    def validate(self, dados):
+        try:
+            data = datetime.strptime(
+                dados['data'], "%d/%m/%Y"
+            )
+
+            dados['data'] = data
+
+            hora = datetime.strptime(
+                dados['hora'], "%H:%M:%S"
+            )
+
+            dados['hora'] = hora
+        except ValueError:
+            raise serializers.ValidationError('Formato de data e hora inválido: DATA - dd/mm/aaaa  HORA - hh:mm:ss') # noqa
+
+        return dados
+
+    def create(self, validated_data):
+        tarefa = Tarefa.objects.create(
+            projeto=validated_data['projeto'],
+            nome=validated_data['nome'],
+            descricao=validated_data['descricao'],
+            data=validated_data['data'],
+            hora=validated_data['hora'],
+            situacao='pendente'
+        )
+
+        return tarefa
+
+    def update(self, instance, validated_data):
+
+        if hasattr(self.context['request'], 'professor'):
+            for key, value in validated_data.items():
+                setattr(instance, key, value)
+
+            instance.save()
+
+        return instance

@@ -4,13 +4,13 @@ from rest_framework.decorators import action
 from rest_framework import status
 from rest_framework.response import Response
 from .models import (
-    Projeto, ProjetoGrupo, Grupo
+    Projeto, ProjetoGrupo, Grupo, Tarefa
 )
 from .serializers import (
     ProjetoGrupoSerializer, ProjetoSerializer,
-    GrupoSerializer
+    GrupoSerializer, TarefaSerializer
 )
-from .filters import GrupoFilter, ProjetoFilter
+from .filters import GrupoFilter, ProjetoFilter, TarefaFilter
 
 from rest_framework.permissions import IsAuthenticated
 from apps.core.permissions import (
@@ -130,3 +130,37 @@ class GrupoViewSet(ModelViewSet):
     )
     def participar_grupos(self, request, pk):
         pass
+
+
+class TarefaViewSet(ModelViewSet):
+
+    permission_classes = [
+        IsAuthenticated,
+        ConcretePermissionProfessor
+    ]
+    serializer_class = TarefaSerializer
+    filterset_class = TarefaFilter
+
+    class Meta:
+        model = Tarefa
+
+    def get_permissions(self):
+        try:
+            if self.request.user.aluno:
+                if self.action in ['list', 'retrieve']:
+                    return [ConcretePermissionAluno()]
+        except (TypeError, AttributeError):
+            return super().get_permissions()
+
+    def get_queryset(self):
+        return Tarefa.objects.all()
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        instance.ativo = False
+        instance.save()
+
+        return Response(
+            status=status.HTTP_204_NO_CONTENT
+        )

@@ -16,8 +16,8 @@ class GrupoAdmin(admin.ModelAdmin):
 
 
 class TarefaAdmin(admin.ModelAdmin):
-    list_display = ('codigo', 'nome', 'prazo', 'situacao', 'projeto')
-    search_fields = ['codigo', 'nome', 'projeto__nome']
+    list_display = ('codigo', 'nome', 'data', 'hora', 'situacao', 'projeto')
+    search_fields = ['codigo', 'nome', 'projeto__nome', 'situacao']
 
 
 class ProjetoGrupoAdmin(admin.ModelAdmin):
