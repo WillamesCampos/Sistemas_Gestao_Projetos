@@ -28,7 +28,6 @@ jobs:
       EMAIL_HOST_PASSWORD: "teste"
 
   steps:
-  - name: Checkout
     uses: actions/checkout@v2
   - name : Linting do código fonte
     run: |
