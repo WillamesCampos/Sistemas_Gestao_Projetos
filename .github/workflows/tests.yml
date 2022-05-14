@@ -2,14 +2,15 @@ name: Testes
 
 on: [pull_request]
 jobs:
-  teste:
-    name: Testes
-    runs-on: ubuntu-latest
-    services:
-      redis:
-        image: redis:latest
-        ports:
-          - 6379:6379
+  build:
+    teste:
+      name: Testes
+      runs-on: ubuntu-latest
+      services:
+        redis:
+          image: redis:latest
+          ports:
+            - 6379:6379
 
   postgres:
     image: postgres:latest
