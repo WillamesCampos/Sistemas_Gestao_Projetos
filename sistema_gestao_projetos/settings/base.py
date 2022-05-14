@@ -144,6 +144,19 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 10
 }
 
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": config('BASE_REDIS_URL'),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "CONNECTION_POOL_KWARGS": {
+                "ssl_cert_reqs": None
+            },
+        }
+    }
+}
+
 AUTH_USER_MODEL = 'usuarios.DjangoCustomUser'
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
@@ -179,3 +192,5 @@ DEBUG = True
 CELERY_BROKER_URL = config('BASE_REDIS_URL')
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
+
+
