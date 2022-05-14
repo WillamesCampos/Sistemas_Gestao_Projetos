@@ -7,5 +7,5 @@ MIDDLEWARE.insert(
 )
 
 ALLOWED_HOSTS = [
-    'https://sistemas-gestao-projetos.herokuapp.com/'
+    'sistemas-gestao-projetos.herokuapp.com, localhost:8000'
 ]
