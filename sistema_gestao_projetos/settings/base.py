@@ -147,7 +147,7 @@ REST_FRAMEWORK = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": config('BASE_REDIS_URL'),
+        "LOCATION": config('REDIS_URL'),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "CONNECTION_POOL_KWARGS": {
@@ -191,7 +191,7 @@ EMAIL_USE_TLS = config('EMAIL_USE_TLS', cast=bool)
 
 
 DEBUG = True
-CELERY_BROKER_URL = config('BASE_REDIS_URL')
+CELERY_BROKER_URL = config('REDIS_URL')
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 
