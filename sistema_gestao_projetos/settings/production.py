@@ -5,12 +5,9 @@ from decouple import config
 
 DEBUG = False
 
-MIDDLEWARE.insert(
-    1, 'whitenoise.middleware.WhiteNoiseMiddleware'
-)
-
 ALLOWED_HOSTS = [
-    'sistemas-gestao-projetos.herokuapp.com, localhost:8000'
+    'sistemas-gestao-projetos.herokuapp.com',
+    '0.0.0.0'
 ]
 
 default_dburl = 'sqlite:///' + os.path.join(BASE_DIR, 'db.sqlite3')
