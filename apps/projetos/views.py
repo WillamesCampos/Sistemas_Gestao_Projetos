@@ -4,7 +4,7 @@ from rest_framework.decorators import action
 from rest_framework import status
 from rest_framework.response import Response
 from .models import (
-    Projeto, ProjetoGrupo, Grupo, Tarefa
+    GrupoTarefa, Projeto, ProjetoGrupo, Grupo, Tarefa
 )
 from .serializers import (
     ProjetoGrupoSerializer, ProjetoSerializer,
@@ -52,6 +52,10 @@ class ProjetoViewSet(ModelViewSet):
     def destroy(self, request, *args, **kwargs):
 
         instance = self.get_object()
+
+        GrupoTarefa.objects.filter(
+            tarefa__projeto=instance
+        ).delete()
 
         ProjetoGrupo.objects.filter(
             projeto=instance
@@ -153,12 +157,14 @@ class TarefaViewSet(ModelViewSet):
             return super().get_permissions()
 
     def get_queryset(self):
-        return Tarefa.objects.all()
+
+        return Tarefa.objects.select_related('projeto').all()
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
 
         instance.ativo = False
+        instance.situacao = 'cancelada'
         instance.save()
 
         return Response(

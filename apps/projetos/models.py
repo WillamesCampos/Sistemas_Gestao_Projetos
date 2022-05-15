@@ -175,7 +175,8 @@ class Tarefa(models.Model):
         db_table = 'tb_tarefa'
 
     def __str__(self) -> str:
-        return self.codigo
+        return f'{self.codigo}'
+
 
 
 class GrupoTarefa(models.Model):
@@ -194,6 +195,9 @@ class GrupoTarefa(models.Model):
     )
     data_criacao = models.DateTimeField(
         auto_now=True
+    )
+    ativo = models.BooleanField(
+        default=True
     )
 
     class Meta:

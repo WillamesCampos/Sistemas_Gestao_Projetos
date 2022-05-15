@@ -45,6 +45,10 @@ class TarefaFilter(filters.FilterSet):
         field_name='projeto__nome',
         lookup_expr='icontains'
     )
+    professor = filters.CharFilter(
+        field_name='projeto__professor__nome',
+        lookup_expr='icontains'
+    )
     nome = filters.CharFilter(
         lookup_expr='icontains'
     )

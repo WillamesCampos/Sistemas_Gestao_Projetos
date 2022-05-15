@@ -14,6 +14,7 @@ class ProjetoFactory(factory.django.DjangoModelFactory):
     tipo = 'Teste'
     area = 'Testes Unitários'
     professor = factory.SubFactory(ProfessorFactory)
+    disciplina = factory.SubFactory(DisciplinaFactory)
 
     class Meta:
         model = Projeto
@@ -44,8 +45,8 @@ class ProjetoGrupoFactory(factory.django.DjangoModelFactory):
 class TarefaFactory(factory.django.DjangoModelFactory):
     nome = factory.Faker('company', locale='pt_BR')
     descricao = 'Uma tarefa para um projeto'
-    data = datetime.now().strftime("%d/%m/%Y")
-    hora = datetime.now().strftime("%H:%M:%S")
+    data = datetime.now()
+    hora = datetime.now()
     situacao = 'pendente'
     responsavel = factory.SubFactory(AlunoFactory)
     projeto = factory.SubFactory(ProjetoFactory)
