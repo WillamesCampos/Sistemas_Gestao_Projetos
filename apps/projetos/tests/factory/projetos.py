@@ -1,10 +1,12 @@
 import factory
-from apps.projetos.models import GrupoTarefa, Projeto, Grupo, ProjetoGrupo, Tarefa
+from apps.projetos.models import (
+    GrupoTarefa, Projeto, Grupo, ProjetoGrupo, Tarefa
+)
 from apps.turmas.tests.factory.turmas import DisciplinaFactory
 from apps.usuarios.tests.factory.usuarios import (
     ProfessorFactory, AlunoFactory
 )
-from datetime import datetime, timedelta
+from datetime import datetime
 
 
 class ProjetoFactory(factory.django.DjangoModelFactory):

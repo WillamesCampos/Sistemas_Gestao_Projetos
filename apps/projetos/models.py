@@ -178,7 +178,6 @@ class Tarefa(models.Model):
         return f'{self.codigo}'
 
 
-
 class GrupoTarefa(models.Model):
     codigo = models.UUIDField(
         default=uuid4,
@@ -205,4 +204,3 @@ class GrupoTarefa(models.Model):
 
     def __str__(self) -> str:
         return self.codigo
-

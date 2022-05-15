@@ -1,12 +1,11 @@
 from datetime import datetime, timedelta
 
 from rest_framework import status
-from apps.projetos.models import GrupoTarefa, Tarefa
+from apps.projetos.models import Tarefa
 from apps.usuarios.tests.factory.usuarios import AlunoFactory, ProfessorFactory
 
 from apps.usuarios.tests.test_login import TestCore
 from apps.turmas.tests.factory.turmas import (
-    TurmaAlunoFactory, TurmaFactory,
     DisciplinaFactory
 )
 from apps.projetos.tests.factory.projetos import (
@@ -96,7 +95,6 @@ class TestTarefaProfessor(TestCore):
                 - status: 200
                 - paginação
         """
-
 
         tarefa = TarefaFactory(
             nome='Teste',
