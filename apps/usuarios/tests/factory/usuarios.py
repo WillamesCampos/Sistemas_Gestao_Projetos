@@ -6,7 +6,7 @@ from apps.usuarios.models import Aluno, Professor
 def gerar_matricula():
     matricula = ''
 
-    for num in range(0, 12):
+    for num in range(1, 13):
         matricula += str(
             choice(
                 range(0, 10)

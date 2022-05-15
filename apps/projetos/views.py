@@ -4,13 +4,13 @@ from rest_framework.decorators import action
 from rest_framework import status
 from rest_framework.response import Response
 from .models import (
-    Projeto, ProjetoGrupo, Grupo
+    GrupoTarefa, Projeto, ProjetoGrupo, Grupo, Tarefa
 )
 from .serializers import (
     ProjetoGrupoSerializer, ProjetoSerializer,
-    GrupoSerializer
+    GrupoSerializer, TarefaSerializer
 )
-from .filters import GrupoFilter, ProjetoFilter
+from .filters import GrupoFilter, ProjetoFilter, TarefaFilter
 
 from rest_framework.permissions import IsAuthenticated
 from apps.core.permissions import (
@@ -52,6 +52,10 @@ class ProjetoViewSet(ModelViewSet):
     def destroy(self, request, *args, **kwargs):
 
         instance = self.get_object()
+
+        GrupoTarefa.objects.filter(
+            tarefa__projeto=instance
+        ).update(ativo=False)
 
         ProjetoGrupo.objects.filter(
             projeto=instance
@@ -130,3 +134,75 @@ class GrupoViewSet(ModelViewSet):
     )
     def participar_grupos(self, request, pk):
         pass
+
+
+class TarefaViewSet(ModelViewSet):
+
+    permission_classes = [
+        IsAuthenticated,
+        ConcretePermissionProfessor
+    ]
+    serializer_class = TarefaSerializer
+    filterset_class = TarefaFilter
+
+    class Meta:
+        model = Tarefa
+
+    def get_permissions(self):
+        try:
+            if self.request.user.aluno:
+                if self.action in [
+                    'list', 'retrieve', 'visualizar_tarefas_grupo'
+                ]:
+                    return [ConcretePermissionAluno()]
+        except (TypeError, AttributeError):
+            return super().get_permissions()
+
+    def get_queryset(self):
+
+        if hasattr(self.request, 'aluno'):
+            grupo_tarefa = GrupoTarefa.objects.filter(
+                tarefa=self.kwargs['pk']
+            )
+
+            if grupo_tarefa:
+                return Tarefa.objects.filter(
+                    Q(grupotarefa__grupo__lider=self.request.aluno)
+                    | Q(grupotarefa__grupo__aluno=self.request.aluno),
+                )
+
+        return Tarefa.objects.select_related('projeto').filter(
+            projeto__professor=self.request.professor
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        instance.ativo = False
+        instance.situacao = 'cancelada'
+        instance.save()
+
+        return Response(
+            status=status.HTTP_204_NO_CONTENT
+        )
+
+    @action(
+        methods=['get'],
+        url_name='visualizar',
+        url_path='visualizar',
+        detail=True,
+        permission_classes=[
+            IsAuthenticated, ConcretePermissionAluno
+        ],
+        serializer_class=TarefaSerializer
+    )
+    def visualizar_tarefas_grupo(self, request, pk=None):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)

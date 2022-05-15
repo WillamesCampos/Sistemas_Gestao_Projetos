@@ -1,6 +1,10 @@
 
+from datetime import datetime
 from rest_framework import serializers
-from .models import Projeto, Grupo, ProjetoGrupo
+from .models import (
+    Projeto, Grupo, ProjetoGrupo,
+    Tarefa, GrupoTarefa
+)
 from apps.usuarios.models import Aluno
 from apps.turmas.models import TurmaAluno, Disciplina
 
@@ -353,3 +357,160 @@ class GrupoSerializer(serializers.ModelSerializer):
             lider=self.context['request'].aluno,
             disciplina=validated_data['disciplina']
         )
+
+
+class TarefaSerializer(serializers.ModelSerializer):
+
+    projeto = serializers.PrimaryKeyRelatedField(
+        pk_field=serializers.UUIDField(
+            format='hex_verbose'
+        ),
+        queryset=Projeto.objects.filter(ativo=True),
+    )
+    data = serializers.CharField(
+        max_length=15
+    )
+    hora = serializers.CharField(
+        max_length=15
+    )
+    situacao = serializers.CharField(
+        required=False,
+        max_length=20
+    )
+    ativo = serializers.BooleanField(
+        required=False
+    )
+
+    class Meta:
+        model = Tarefa
+        fields = [
+            'nome', 'projeto', 'situacao', 'descricao',
+            'data', 'hora', 'ativo'
+        ]
+
+    def to_representation(self, instance):
+        return {
+            'codigo': instance.codigo,
+            'nome': instance.nome,
+            'descricao': instance.descricao,
+            'situacao': instance.situacao,
+            'prazo': instance.prazo_formatado,
+            'status': instance.ativo,
+            'projeto': {
+                'codigo': instance.projeto.codigo,
+                'nome': instance.projeto.nome,
+                'professor': instance.projeto.professor.nome,
+                'disciplina': instance.projeto.disciplina.nome
+            }
+        }
+
+    def validate_projeto(self, projeto):
+        if hasattr(
+            self.context['request'], 'professor'
+        ):
+            if projeto.professor != self.context['request'].professor:
+                raise serializers.ValidationError(
+                    'O projeto não está associado a sua conta. Não é possível criar uma tarefa' # noqa
+                )
+        return projeto
+
+    def validate_situacao(self, situacao):
+        if situacao not in ['pendente', 'concluida', 'atrasada']:
+            raise serializers.ValidationError(
+                'A situação só pode ser pendente, concluída ou atrasada.'
+            )
+
+        return situacao
+
+    def validate(self, dados):
+        try:
+            if dados.get('data'):
+                data = datetime.strptime(
+                    dados['data'], "%d/%m/%Y"
+                )
+
+                dados['data'] = data
+
+            if dados.get('hora'):
+                hora = datetime.strptime(
+                    dados['hora'], "%H:%M:%S"
+                )
+
+                dados['hora'] = hora
+        except ValueError:
+            raise serializers.ValidationError('Formato de data e hora inválido: DATA - dd/mm/aaaa  HORA - hh:mm:ss') # noqa
+
+        return dados
+
+    def create(self, validated_data):
+        projetos_grupos = ProjetoGrupo.objects.select_related(
+            'projeto', 'grupo'
+        ).filter(
+            projeto=validated_data['projeto'],
+            projeto__ativo=True
+        )
+        if not projetos_grupos:
+            return Tarefa.objects.create(
+                projeto=validated_data['projeto'],
+                nome=validated_data['nome'],
+                descricao=validated_data['descricao'],
+                data=validated_data['data'],
+                hora=validated_data['hora'],
+                situacao='pendente'
+            )
+
+        tarefas = []
+        grupos_tarefas = []
+        for projeto_grupo in projetos_grupos:
+            tarefas.append(
+                Tarefa(
+                    projeto=validated_data['projeto'],
+                    nome=validated_data['nome'],
+                    descricao=validated_data['descricao'],
+                    data=validated_data['data'],
+                    hora=validated_data['hora'],
+                    situacao='pendente'
+                )
+            )
+
+        tarefas_criadas = Tarefa.objects.bulk_create(tarefas)
+
+        for tarefa in tarefas_criadas:
+            grupos_tarefas.append(
+                GrupoTarefa(
+                    grupo=projeto_grupo.grupo,
+                    tarefa=tarefa
+                )
+            )
+
+        GrupoTarefa.objects.bulk_create(grupos_tarefas)
+
+        return tarefas_criadas[0]
+
+    def update(self, instance, validated_data):
+
+        if validated_data.get('projeto'):
+
+            tarefas = Tarefa.objects.filter(
+                projeto=instance.projeto,
+                nome=instance.nome,
+                ativo=True
+            )
+
+            for tarefa in tarefas:
+                tarefa.projeto = validated_data['projeto']
+
+            Tarefa.objects.bulk_update(
+                tarefas,
+                ['projeto']
+            )
+
+            validated_data.pop('projeto')
+
+        if hasattr(self.context['request'], 'professor'):
+            for key, value in validated_data.items():
+                setattr(instance, key, value)
+
+            instance.save()
+
+        return instance

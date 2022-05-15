@@ -7,7 +7,7 @@ from apps.usuarios.tests.factory.usuarios import AlunoFactory, ProfessorFactory
 
 class DisciplinaFactory(factory.django.DjangoModelFactory):
 
-    nome = factory.Faker('company', locale='pt_BR'),
+    nome = factory.Faker('company', locale='pt_BR')
     nota_corte = 5.0
     professor = factory.SubFactory(ProfessorFactory)
 

@@ -10,7 +10,7 @@ from apps.projetos.models import Projeto, ProjetoGrupo
 from factory import Faker
 
 
-class TestProjeto(TestCore):
+class TestProjetoProfessor(TestCore):
 
     """
         Testes para manutenir projetos e gerenciar grupos
