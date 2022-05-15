@@ -55,7 +55,7 @@ class ProjetoViewSet(ModelViewSet):
 
         GrupoTarefa.objects.filter(
             tarefa__projeto=instance
-        ).delete()
+        ).update(ativo=False)
 
         ProjetoGrupo.objects.filter(
             projeto=instance
@@ -151,14 +151,29 @@ class TarefaViewSet(ModelViewSet):
     def get_permissions(self):
         try:
             if self.request.user.aluno:
-                if self.action in ['list', 'retrieve']:
+                if self.action in [
+                    'list', 'retrieve', 'visualizar_tarefas_grupo'
+                ]:
                     return [ConcretePermissionAluno()]
         except (TypeError, AttributeError):
             return super().get_permissions()
 
     def get_queryset(self):
 
-        return Tarefa.objects.select_related('projeto').all()
+        if hasattr(self.request, 'aluno'):
+            grupo_tarefa = GrupoTarefa.objects.filter(
+                tarefa=self.kwargs['pk']
+            )
+
+            if grupo_tarefa:
+                return Tarefa.objects.filter(
+                    Q(grupotarefa__grupo__lider=self.request.aluno)
+                    | Q(grupotarefa__grupo__aluno=self.request.aluno),
+                )
+
+        return Tarefa.objects.select_related('projeto').filter(
+            projeto__professor=self.request.professor
+        )
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -170,3 +185,24 @@ class TarefaViewSet(ModelViewSet):
         return Response(
             status=status.HTTP_204_NO_CONTENT
         )
+
+    @action(
+        methods=['get'],
+        url_name='visualizar',
+        url_path='visualizar',
+        detail=True,
+        permission_classes=[
+            IsAuthenticated, ConcretePermissionAluno
+        ],
+        serializer_class=TarefaSerializer
+    )
+    def visualizar_tarefas_grupo(self, request, pk=None):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)

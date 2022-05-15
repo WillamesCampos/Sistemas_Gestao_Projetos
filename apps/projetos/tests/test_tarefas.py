@@ -433,6 +433,8 @@ class TestTarefaProfessor(TestCore):
                 - Edita uma tarefa.
             - Regra de negócio:
                 - Altera parâmetros da tarefa.
+                - Data e hora, nome e descrição
+                são parâmetros que podem ser alterados.
             - Resultado Esperado:
                 - status: 200
         """
@@ -475,6 +477,16 @@ class TestTarefaProfessor(TestCore):
         )
 
     def test_alterar_projeto_tarefa(self):
+        """
+            - Motivação:
+                - Altera um projeto de uma tarefa.
+            - Regra de negócio:
+                - Todas as tarefas que forem designadas
+                a diferentes grupos, mas com mesmo conteúdo,
+                também têm o projeto mudado.
+            - Resultado Esperado:
+                - status: 200
+        """
 
         tarefa = TarefaFactory(
             projeto=self.projeto,
@@ -509,6 +521,15 @@ class TestTarefaProfessor(TestCore):
         )
 
     def test_desativar_tarefa(self):
+        """
+            - Motivação:
+                - Desativar uma tarefa
+            - Regra de negócio:
+                - A tarefa fica com status ativo = False
+                e situação cancelada.
+            - Resultado Esperado:
+                - status: 204
+        """
 
         tarefa = TarefaFactory(
             projeto=self.projeto,
@@ -556,8 +577,34 @@ class TestTarefaAluno(TestCore):
             aluno=cls.integrante_grupo
         )
 
-        cls.grupo_tarefa = GrupoTarefaFactory(
-            tarefa=cls.tarefa,
-            grupo=cls.grupo
+    def test_visualizar_tarefas_grupo(self):
+        """
+            - Motivação:
+                - Exibir tarefas do usuário que pertence a um grupo
+            - Regra de negócio:
+                - São listadas as tarefas associadas ao grupo que o
+                aluno logado é líder ou membro.
+            - Resultado Esperado:
+                - status: 200
+        """
+
+        tarefa = TarefaFactory(
+            projeto=self.projeto,
+            responsavel=self.aluno
         )
 
+        GrupoTarefaFactory(
+            grupo=self.grupo,
+            tarefa=tarefa
+        )
+
+        url = f'/tarefas/{tarefa.codigo}/visualizar/'
+
+        response = self.client.get(
+            url
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
